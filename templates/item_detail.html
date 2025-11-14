@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex gap-6">
+
+  <!-- Sidebar mit Icons -->
+  <aside class="w-80 shrink-0">
+    {% for it in items %}
+      <div class="mb-3 rounded-lg bg-slate-800/60 p-3">
+        <div class="flex items-center gap-3">
+          {% if it.icon %}
+            <img src="{{ it.icon }}" alt="" class="w-9 h-9 rounded object-contain">
+          {% else %}
+            <div class="w-9 h-9 rounded bg-slate-700"></div>
+          {% endif %}
+
+          <div class="min-w-0">
+            <a href="{{ url_for('item', item_id=it.id) }}"
+               class="block truncate font-medium hover:text-white">
+              {{ it.name }}
+            </a>
+            <div class="text-xs text-gray-300">
+              Kauf {{ it.buy is not none and ('%.2f' % it.buy) or '–' }} €
+              · Jetzt {{ it.cur is not none and ('%.2f' % it.cur) or '–' }} €
+              · Netto {{ it.net is not none and ('%.2f' % it.net) or '–' }} €
+            </div>
+          </div>
+
+          {% if it.diff_n is not none %}
+            <div class="ml-auto text-sm {{ 'text-green-400' if it.diff_n>=0 else 'text-red-500' }}">
+              {{ '▲' if it.diff_n>=0 else '▼' }} {{ '%.2f'|format(it.diff_n) }} €
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="mt-2 flex gap-2">
+          <a href="{{ url_for('edit_item', item_id=it.id) }}"
+             class="btn btn-xs bg-slate-600 hover:bg-slate-500">Bearbeiten</a>
+          <form method="post" action="{{ url_for('deactivate_item', item_id=it.id) }}">
+            <button class="btn btn-xs bg-red-600 hover:bg-red-700">Deaktivieren</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+
+    <a href="{{ url_for('add') }}" class="btn w-full bg-amber-600 hover:bg-amber-500">
+      + Hinzufügen
+    </a>
+  </aside>
+
+  <!-- Detailbereich -->
+  <section class="flex-1">
+    <div class="rounded-lg border border-slate-700/60 bg-slate-800/40 p-5">
+      <header class="mb-4 flex items-center gap-4">
+        {% if selected.icon %}
+          <img src="{{ selected.icon }}" alt="" class="w-16 h-16 rounded object-contain">
+        {% endif %}
+        <div>
+          <h1 class="text-xl font-semibold">{{ selected.name }}</h1>
+          <div class="text-sm text-gray-300">
+            Kauf: <b>{{ selected.buy is not none and ('%.2f' % selected.buy) or '–' }} €</b> ·
+            Brutto: <b>{{ selected.cur is not none and ('%.2f' % selected.cur) or '–' }} €</b> ·
+            Netto ({{ '%.0f'|format(fee_rate*100) }}%): <b>{{ selected.net is not none and ('%.2f' % selected.net) or '–' }} €</b> ·
+            Δ brutto:
+            <b class="{{ 'text-green-400' if selected.diff_g>=0 else 'text-red-500' }}">
+              {{ selected.diff_g is not none and (selected.diff_g>=0 and '+' or '') ~ '%.2f'|format(selected.diff_g) or '–' }} €
+            </b> ·
+            Δ netto:
+            <b class="{{ 'text-green-400' if selected.diff_n>=0 else 'text-red-500' }}">
+              {{ selected.diff_n is not none and (selected.diff_n>=0 and '+' or '') ~ '%.2f'|format(selected.diff_n) or '–' }} €
+            </b>
+          </div>
+        </div>
+      </header>
+
+      <div class="h-[420px] w-full">
+        <canvas id="chart" class="h-full w-full"></canvas>
+      </div>
+
+      <form class="mt-4 flex items-center gap-3"
+            method="post" action="{{ url_for('save_threshold', item_id=item_id) }}">
+        <label class="text-sm text-gray-300">Sofort-Alarm (Netto ≥)</label>
+        <input type="text" name="threshold"
+               value="{{ alert_th is not none and ('%.2f' % alert_th) or '' }}"
+               placeholder="z.B. 7,00"
+               class="input w-40">
+        <button class="btn bg-amber-600 hover:bg-amber-500">Speichern</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Chart-Daten laden und rendern
+  fetch('{{ url_for("api_item", item_id=item_id) }}')
+    .then(r => r.json())
+    .then(d => {
+      if (typeof renderPriceChart === 'function') {
+        renderPriceChart('chart', d);
+      }
+    });
+</script>
+{% endblock %}

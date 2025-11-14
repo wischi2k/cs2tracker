@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS2 Tracker</title>
+
+  <!-- Tailwind (CDN) – ok für Dev -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Eigenes Theme (falls vorhanden) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}"/>
+
+  <!-- Kleine, robuste Defaults -->
+  <style>
+    img.item-icon { max-width: 44px; max-height: 44px; object-fit: contain; border-radius: .375rem }
+    img.item-hero { max-width: 160px; max-height: 160px; object-fit: contain; border-radius: .5rem }
+  </style>
+
+  <!-- Charts: erst Chart.js, dann (optional) Date-Adapter, dann dein Helper -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns" defer></script>
+  <script src="{{ url_for('static', filename='js/chart-helpers.js') }}" defer></script>
+
+  <!-- (Optional) Favicon, wenn vorhanden -->
+  <!-- <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}"> -->
+</head>
+<body class="bg-slate-900 text-slate-100">
+  <div class="max-w-[1400px] mx-auto px-4 py-5">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-semibold tracking-tight">CS2 Tracker</h1>
+      <div class="text-xs text-slate-400">Steam-Gebühr fix: 15 %</div>
+    </div>
+
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>
