@@ -180,6 +180,19 @@ Dateien
 - Telegram-Helper: `telegram_util.py`
 - Static / Templates: `static/`, `templates/`
 
+Developer & Project Notes
+-------------------------
+- Debug- und Hilfsskripte befinden sich im Ordner `scripts/` (z. B. `scripts/inspect_db.py`, `scripts/print_item.py`, `scripts/fetch_icon...`). Diese Skripte sind für lokale Checks gedacht und werden nicht automatisch ausgeführt.
+- Icon-Handling: Beim Anlegen eines Items versucht die App automatisch, ein Icon via Steam Search-API zu holen. Wenn kein verifizierter Treffer existiert, kann ein Fallback-Icon gesetzt werden (nur wenn verfügbar). Du kannst ein Icon manuell im Edit-Dialog unter "Icon URL (optional)" setzen.
+- Cache-Busting: Um sicherzustellen, dass neu gesetzte Icons sofort im Browser sichtbar sind, hängt die UI einen `cb=<timestamp>` Query-Parameter an Icon-URLs an. Dadurch werden Browser-Caches umgangen, sobald ein Icon geändert oder neu gesetzt wurde.
+
+Git / Deploy Hinweise
+---------------------
+- Änderungen an Debug-/Testskripten wurden in `scripts/` verschoben, damit das Projekt-Root übersichtlich bleibt.
+- Empfohlenes Commit-Verhalten: Test-/Debug-Skripte nicht in die produktive CI einbinden; ggf. in `.gitignore` aufnehmen, falls gewünscht.
+
+Wenn du möchtest, kann ich optional die README noch um einen Abschnitt zur Entwicklung (z. B. wie man neue Migrationsskripte schreibt) oder um Beispielsystemd/Task-Scheduler-Dateien ergänzen.
+
 Wenn du möchtest, kann ich:
 - die `README.md` noch auf Englisch übersetzen
 - Beispiel-`.env` hinzufügen (`.env.example`)
