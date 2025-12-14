@@ -8,13 +8,15 @@ import urllib.parse as up
 import requests
 from bs4 import BeautifulSoup
 from flask import (
-    Flask, render_template, request, redirect, url_for, jsonify
+    Flask, render_template, request, redirect, url_for, jsonify, flash
 )
+from telegram_util import tg_send
 
 DB_PATH = "cs2_prices.sqlite"
 FEE_RATE = 0.15  # fixer Steam-Satz
 
 app = Flask(__name__)
+app.secret_key = "cs2tracker_secret_2025"  # für Flash-Messages
 
 # ---------------------------- DB Utils ----------------------------
 
@@ -340,9 +342,7 @@ def item(item_id: int):
 def get_threshold(item_id: int) -> Optional[float]:
     con = connect()
     try:
-        con.execute("""CREATE TABLE IF NOT EXISTS alerts(
-            item_id INTEGER PRIMARY KEY, threshold_net_eur REAL, above_threshold INTEGER DEFAULT 0
-        )""")
+        ensure_alerts_table(con)
         row = con.execute("SELECT threshold_net_eur FROM alerts WHERE item_id=?", (item_id,)).fetchone()
         return None if not row else float(row[0]) if row[0] is not None else None
     finally:
@@ -368,8 +368,15 @@ def set_alert(item_id: int):
     con = connect()
     ensure_alerts_table(con)
 
+    # Item-Namen für Benachrichtigung
+    item_name = con.execute("SELECT display_name FROM items WHERE id=?", (item_id,)).fetchone()
+    item_name = item_name[0] if item_name else f"Item #{item_id}"
+
     if th is None:
         con.execute("DELETE FROM alerts WHERE item_id=?", (item_id,))
+        con.commit()
+        msg = f"❌ Preisalarm für {html.escape(item_name)} wurde gelöscht."
+        flash(msg, "info")
     else:
         con.execute("""
             INSERT INTO alerts(item_id, threshold_net_eur, above_threshold)
@@ -378,7 +385,15 @@ def set_alert(item_id: int):
               threshold_net_eur=excluded.threshold_net_eur,
               above_threshold=0
         """, (item_id, th))
-    con.commit(); con.close()
+        con.commit()
+        msg = f"✅ Preisalarm für {html.escape(item_name)} eingerichtet: ab € {th:.2f} (Netto)."
+        flash(msg, "success")
+        try:
+            tg_send(f"✅ <b>{html.escape(item_name)}</b> – ab € {th:.2f}")
+        except Exception as e:
+            print(f"[Telegram] Fehler beim Versand: {e}")
+    
+    con.close()
 
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return ("OK", 200)
@@ -449,7 +464,7 @@ def add_post():
 # ---- Edit (GET) --------------------------------------------------
 
 @app.get("/item/<int:item_id>/edit")
-def edit_item(item_id: int):
+def edit_item_get(item_id: int):
     sel_cat = request.args.get("cat", "Alle")
 
     con = connect()
@@ -475,7 +490,7 @@ def edit_item(item_id: int):
         "active":       int(row["is_active"]),
     }
 
-    cats = globals().get("CATEGORIES", ["Waffen-Skin","Sticker","Agent","Kiste","Schlüssel","Patch","Musik-Kit","Sonstiges"])
+    cats = ["Waffen-Skin","Sticker","Agent","Kiste","Schlüssel","Patch","Musik-Kit","Unbekannt"]
     return render_template("edit.html", it=it, sel_cat=sel_cat, categories=cats)
 
 # ---- Edit speichern ----------------------------------------------

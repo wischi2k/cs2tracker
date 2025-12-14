@@ -49,7 +49,7 @@
     {# Edit-Button separat, rechts unten #}
     <div class="flex justify-end pb-2 pr-2">
       <a
-        href="{{ url_for('edit_item', item_id=it.id, cat=request.args.get('cat','Alle')) }}"
+        href="{{ url_for('edit_item_get', item_id=it.id, cat=request.args.get('cat','Alle')) }}"
         class="inline-flex items-center rounded-lg px-3 py-1.5 text-sm bg-slate-700/60 hover:bg-slate-600"
       >Bearbeiten</a>
     </div>
