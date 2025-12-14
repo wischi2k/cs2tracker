@@ -215,33 +215,36 @@ def _parse_market_hash_from_url(steam_url: str) -> str | None:
     return up.unquote(m.group(1)) if m else None
 
 def _fetch_meta_for_hash(mh: str) -> tuple[str, str | None, str | None]:
-    # 1) schnelle JSON-Suche
+    # 1) schnelle JSON-Suche — validiert exakte Treffer
     url = (f"https://steamcommunity.com/market/search/render/?"
            f"appid=730&norender=1&count=1&query={up.quote(mh)}")
     try:
         j = requests.get(url, timeout=10).json()
         if j.get("success") and j.get("results"):
             r0 = j["results"][0]
-            name = r0.get("name") or mh
-            desc = r0.get("asset_description") or {}
-            icon_path = desc.get("icon_url")
-            icon = f"https://steamcommunity-a.akamaihd.net/economy/image/{icon_path}" if icon_path else None
-            typ = (desc.get("type") or "").lower()
-            if "case" in typ or "container" in typ:
-                cat = "Kiste"
-            elif "sticker" in typ:
-                cat = "Sticker"
-            elif "agent" in typ:
-                cat = "Agent"
-            elif "key" in typ:
-                cat = "Schlüssel"
-            elif "patch" in typ:
-                cat = "Patch"
-            elif "music" in typ:
-                cat = "Musik-Kit"
-            else:
-                cat = "Waffen-Skin"
-            return (name, icon, cat)
+            result_name = r0.get("name") or r0.get("hash_name") or ""
+            # Validierung: nur akzeptieren wenn Treffer exakt dem Query entspricht
+            if result_name and result_name.strip() == mh.strip():
+                name = result_name
+                desc = r0.get("asset_description") or {}
+                icon_path = desc.get("icon_url")
+                icon = f"https://steamcommunity-a.akamaihd.net/economy/image/{icon_path}" if icon_path else None
+                typ = (desc.get("type") or "").lower()
+                if "case" in typ or "container" in typ:
+                    cat = "Kiste"
+                elif "sticker" in typ:
+                    cat = "Sticker"
+                elif "agent" in typ:
+                    cat = "Agent"
+                elif "key" in typ:
+                    cat = "Schlüssel"
+                elif "patch" in typ:
+                    cat = "Patch"
+                elif "music" in typ:
+                    cat = "Musik-Kit"
+                else:
+                    cat = "Waffen-Skin"
+                return (name, icon, cat)
     except Exception:
         pass
     # 2) Fallback HTML
@@ -433,7 +436,7 @@ def add_post():
             error="Bitte eine gültige Steam-Market-URL oder einen Market-Hash angeben."
         )
 
-    # Meta holen
+    # Meta holen: nutze die Search-API (render) für exakte Treffer
     disp, icon, cat = _fetch_meta_for_hash(mh)
     if name_in:
         disp = name_in
@@ -516,6 +519,7 @@ def update_item(item_id: int):
         mh_new = _parse_market_hash_from_url(steam_url)
         if mh_new:
             market_hash = mh_new
+            # Hole Metadaten via Search-API
             dname, icon, auto_cat = _fetch_meta_for_hash(market_hash)
             display_name = dname
             if not cat_in:

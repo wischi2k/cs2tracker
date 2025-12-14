@@ -27,7 +27,7 @@ def get_json_bom_safe(url: str, timeout: int = 15) -> Optional[dict]:
 
 def parse_eur_to_cents(s: str) -> Optional[int]:
     """
-    '2,35€' | '1.234,56 €' | '€ 0,92' -> 235 | 123456 | 92
+    '2,35€' | '1.234,56 €' | '€ 0,92' | '84,--€' -> 235 | 123456 | 92 | 8400
     """
     if not s:
         return None
@@ -36,10 +36,18 @@ def parse_eur_to_cents(s: str) -> Optional[int]:
     s = re.sub(r"[^0-9,.\-]", "", s)
     if not s:
         return None
-    if "," in s:
+    # Ersetze '--' mit '00' (z.B. '84,--' -> '84,00')
+    s = s.replace("--", "00")
+    # Entferne alle verbleibenden Minus-Zeichen (negativ-Flag)
+    is_negative = s.startswith("-")
+    s = s.lstrip("-")
+    if "," in s:  # EU-Format
         s = s.replace(".", "").replace(",", ".")
     try:
-        return int(round(float(s) * 100))
+        val = float(s)
+        if is_negative:
+            val = -val
+        return int(round(val * 100))
     except ValueError:
         return None
 
@@ -55,7 +63,7 @@ def fetch_price_cents_overview(market_hash: str) -> Optional[int]:
 def find_best_name_via_search(query: str) -> Optional[str]:
     """
     Nutzt search/render, um den korrekten Namen zu finden.
-    Nimmt den ersten Treffer (für CS2 reicht das i.d.R.).
+    Validiert, dass der Treffer exakt dem Query entspricht (verhindert falsche Treffer).
     """
     url = (f"https://steamcommunity.com/market/search/render/"
            f"?appid=730&norender=1&count=1&query={up.quote(query)}")
@@ -66,9 +74,12 @@ def find_best_name_via_search(query: str) -> Optional[str]:
     if not res:
         return None
     r0 = res[0]
-    # Manche Antworten tragen 'hash_name', meist reicht aber 'name'
-    name = r0.get("name") or r0.get("hash_name")
-    return name
+    # Validierung: nur akzeptieren wenn Treffer exakt dem Query entspricht
+    result_name = r0.get("name") or r0.get("hash_name")
+    if result_name and result_name.strip() == query.strip():
+        return result_name
+    # Wenn kein exakter Treffer, nicht fallback zu falschem Treffer
+    return None
 
 def fetch_price_cents_robust(market_hash: str) -> Tuple[Optional[int], str]:
     """
