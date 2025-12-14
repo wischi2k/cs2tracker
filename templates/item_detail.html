@@ -9,7 +9,8 @@
       <div class="mb-3 rounded-lg bg-slate-800/60 p-3">
         <div class="flex items-center gap-3">
           {% if it.icon %}
-            <img src="{{ it.icon }}" alt="" class="w-9 h-9 rounded object-contain">
+            {% set sep = '&' if '?' in it.icon else '?' %}
+            <img src="{{ it.icon }}{{ sep }}cb={{ now_ts }}" alt="" class="w-9 h-9 rounded object-contain">
           {% else %}
             <div class="w-9 h-9 rounded bg-slate-700"></div>
           {% endif %}

@@ -306,7 +306,8 @@ def index():
     return render_template("index.html",
                            categories=cats,
                            items=items,
-                           selected=None)
+                           selected=None,
+                           now_ts=int(time.time()))
 
 @app.get("/item/<int:item_id>")
 def item(item_id: int):
@@ -337,7 +338,8 @@ def item(item_id: int):
         "index.html",
         categories=cats,
         items=items,
-        selected={"it": it, "chart": chart, "alert_th": alert_th}
+        selected={"it": it, "chart": chart, "alert_th": alert_th},
+        now_ts=int(time.time())
     )
 
 # ------------------------- Alerts --------------------------------
@@ -462,6 +464,22 @@ def add_post():
     if cur_cents is not None:
         insert_price_snapshot(new_id, cur_cents)
 
+    # Versuch: Icon sofort auto-fetchen (falls bei _fetch_meta_for_hash kein Icon geliefert wurde)
+    try:
+        if not icon:
+            from fetch_icons import steam_icon
+            fetched = steam_icon(mh)
+            if fetched:
+                # handle FALLBACK:: marker
+                if isinstance(fetched, str) and fetched.startswith("FALLBACK::"):
+                    fetched = fetched.split("FALLBACK::", 1)[1]
+                # store into DB
+                con2 = connect()
+                con2.execute("UPDATE items SET icon_url=? WHERE id=?", (fetched, new_id))
+                con2.commit(); con2.close()
+    except Exception:
+        pass
+
     return redirect(url_for("item", item_id=new_id))
 
 # ---- Edit (GET) --------------------------------------------------
@@ -533,14 +551,21 @@ def update_item(item_id: int):
     except ValueError:
         buy_cents = None
 
+    # allow manual icon override from the edit form
+    icon_in = (request.form.get("icon_url") or "").strip() or None
+
     sets = ["display_name = ?", "market_hash = ?", "buy_price_cents = ?", "category = ?"]
     vals: list[Any] = [display_name, market_hash, buy_cents, cat_in]
-    if icon is not None:
+    # priority: manual icon from form > fetched icon
+    if icon_in is not None:
+        sets.append("icon_url = ?")
+        vals.append(icon_in)
+    elif icon is not None:
         sets.append("icon_url = ?")
         vals.append(icon)
     vals.append(item_id)
 
-    con.execute(f"UPDATE items SET {', '.join(sets)} WHERE id=?", vals)
+    con.execute(f"UPDATE items SET {', '.join(sets)} WHERE id=", vals)
     con.commit(); con.close()
     return redirect(url_for("item", item_id=item_id))
 

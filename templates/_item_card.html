@@ -15,7 +15,8 @@
 
         {# Icon #}
         {% if it.icon %}
-          <img src="{{ it.icon }}" alt="" class="item-icon" />
+          {% set sep = '&' if '?' in it.icon else '?' %}
+          <img src="{{ it.icon }}{{ sep }}cb={{ now_ts }}" alt="" class="item-icon" />
         {% else %}
           <div class="h-11 w-11 rounded-md bg-slate-700/70"></div>
         {% endif %}

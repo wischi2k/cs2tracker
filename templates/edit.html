@@ -52,6 +52,17 @@
         </select>
       </div>
 
+        <div>
+          <label class="block text-sm mb-1">Icon URL (optional)</label>
+          <input name="icon_url" value="{{ it.icon_url or '' }}" class="w-full bg-slate-800 rounded px-3 py-2" placeholder="https://..." />
+          <div class="text-xs text-slate-400 mt-1">Icon von Steam Market oder eigene URL. Leer lassen, um Auto-Fetch zu ermöglichen.</div>
+          {% if it.icon_url %}
+            <div class="mt-2">
+              <img src="{{ it.icon_url }}" alt="Icon" class="h-16 w-16 rounded" />
+            </div>
+          {% endif %}
+        </div>
+
       <div class="flex gap-2">
         <button class="rounded-lg px-4 py-2 bg-amber-600 hover:bg-amber-500">Speichern</button>
         <a href="{{ url_for('item', item_id=it.id, cat=sel_cat) }}"

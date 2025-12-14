@@ -3,7 +3,8 @@
   <!-- Header -->
   <div class="flex items-center gap-4">
     {% if it.icon %}
-      <img src="{{ it.icon }}" class="item-hero" alt="">
+      {% set sep = '&' if '?' in it.icon else '?' %}
+      <img src="{{ it.icon }}{{ sep }}cb={{ now_ts }}" class="item-hero" alt="">
     {% endif %}
     <div>
       <div class="text-lg font-semibold">{{ it.name }}</div>
