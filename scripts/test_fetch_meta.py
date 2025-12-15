@@ -34,7 +34,7 @@ try:
     item_type = type_el.get_text(strip=True) if type_el else ""
     
     if not icon_el:
-        m = re.search(r'https://steamcommunity-a\.akamaihd\.net/economy/image/[^"']+', html_text)
+        m = re.search(r'https://steamcommunity-a\.akamaihd\.net/economy/image/[^"]+', html_text)
         icon_src = html.unescape(m.group(0)) if m else None
     else:
         icon_src = icon_el.get("src")

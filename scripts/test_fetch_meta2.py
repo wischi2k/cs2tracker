@@ -23,7 +23,7 @@ try:
         print(f"Type via regex: {m_type.group(1)}")
     
     # Look for image icon
-    m_img = re.search(r'https://steamcommunity-a\.akamaihd\.net/economy/image/[^"']+', html_text)
+    m_img = re.search(r'https://steamcommunity-a\.akamaihd\.net/economy/image/[^"\']+', html_text)
     if m_img:
         print(f"Icon via regex: {m_img.group(0)[:80]}...")
     

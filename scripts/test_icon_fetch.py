@@ -10,7 +10,7 @@ try:
     print(f"Page length: {len(page)}")
     
     # Suche nach Icons
-    matches = re.findall(r'https://steamcommunity-a\.akamaihd\.net/economy/image/[^"']+', page)
+    matches = re.findall(r'https://steamcommunity-a\.akamaihd\.net/economy/image/[^"\']+', page)
     if matches:
         print(f"Found {len(matches)} icon URLs")
         for i, m in enumerate(matches[:3]):
