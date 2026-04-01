@@ -146,3 +146,27 @@
 </div>
 
 {% endblock %}
+
+{% block scripts %}
+<script>
+/* Bug 2 Fix: Theme-Swatch live Feedback ohne Seiten-Reload */
+(function () {
+  var swatches = document.querySelectorAll('.theme-swatch');
+  swatches.forEach(function (swatch) {
+    var radio = swatch.querySelector('input[type="radio"]');
+    if (!radio) return;
+    radio.addEventListener('change', function () {
+      swatches.forEach(function (s) { s.classList.remove('selected'); });
+      swatch.classList.add('selected');
+    });
+    /* Klick auf die ganze Karte toggelt das Radio-Button und loest change aus */
+    swatch.addEventListener('click', function () {
+      if (!radio.checked) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+}());
+</script>
+{% endblock %}
