@@ -1,87 +1,124 @@
-# CS2 Tracker (modular + setup)
+# CS2 Tracker
 
-Dieses Repository ist die konsolidierte Endversion: modulare Architektur mit browserbasiertem Setup.
+Portfolio-Tracker für CS2 (Counter-Strike 2) Market-Items. Preise werden automatisch über die Steam-Market-API abgerufen, Verläufe gespeichert und optional per Telegram-Zusammenfassung gemeldet.
+
+## Features
+
+- **Item-Verwaltung** — Items per Steam-Market-URL hinzufügen, Kaufpreis hinterlegen, Kategorie setzen
+- **Automatische Preisupdates** — interner Scheduler mit konfigurierbarem Intervall (5–1440 Min.)
+- **Preishistorie & Chart** — Verlauf pro Item als Zeitreihe
+- **Gewinn/Verlust-Anzeige** — Brutto und Netto (Steam-Gebühr 15 %) mit farbigem Glow
+- **Preisalarme** — Telegram-Benachrichtigung ab einem konfigurierbaren Netto-Schwellwert
+- **Telegram-Zusammenfassung** — periodischer Report mit Top-Gewinnern, Verlierern und wertvollsten Items
+- **Theme-System** — 4 wählbare Farbthemes inkl. Neon-Glow-Effekten
+- **Browserbasiertes Setup** — kein manuelles Editieren von Dateien nötig
+
+## Themes
+
+Wählbar unter `/settings` → Allgemein:
+
+| Theme | Stimmung |
+|---|---|
+| Standard Dark | Klassisches Dunkel |
+| Midnight Jungle Glow | Mystisch, botanisch, neon |
+| Arcade Glow Nights | Retro-futuristisch, neon-lit |
+| Lime Punch Charcoal | Urban, high-contrast, elektrisch |
+
+Alle Themes nutzen CSS Custom Properties (`data-theme` auf `<html>`). Glow-Effekte basieren auf gestapelten `box-shadow`/`text-shadow`-Werten und einem Cursor-folgenden `radial-gradient`-Spotlight pro Karte.
 
 ## Schnellstart
 
-1. Python 3.11+ installieren
-2. Abhaengigkeiten installieren:
-
 ```bash
 python -m venv .venv
-# Linux
+
+# Linux/macOS
 source .venv/bin/activate
+
 # Windows PowerShell
 # .venv\Scripts\Activate.ps1
+
 pip install -r requirements.txt
-```
-
-3. Optional `.env` anlegen (siehe `.env.example`)
-4. App starten:
-
-```bash
 python run.py
 ```
 
-Fuer Zugriff aus dem lokalen Netzwerk:
+Beim ersten Start wird automatisch auf `/setup` weitergeleitet.
 
-- `FLASK_HOST=0.0.0.0` setzen
-- im Setup unter "Zugriff auf Web-UI" die Option "Lokales Netzwerk" waehlen
+Optional `.env` anlegen (siehe `.env.example`):
 
-## Zero-Touch Setup
+```env
+FLASK_HOST=0.0.0.0      # Netzwerkzugriff
+FLASK_PORT=5000
+FLASK_DEBUG=false
+CS2_DB_PATH=cs2_prices.sqlite
+CS2_SECRET_KEY=<eigener_schluessel>
+```
 
-Beim ersten Start wird automatisch auf `/setup` geleitet.
+## Setup-Assistent
 
-1. `GET /setup` oeffnen
-2. Preisupdate-Intervall und Benachrichtigungen setzen
-3. Telegram Token + Chat-ID testen und speichern
-4. Setup abschliessen
+1. `/setup` aufrufen
+2. Preisupdate-Intervall, Zugriffs-Scope und Theme wählen
+3. Telegram-Bot-Token + Chat-ID testen und speichern
+4. Setup abschließen → weiterleitung auf `/`
 
-Danach sind Einstellungen unter `/settings` verfuegbar.
+Einstellungen danach jederzeit unter `/settings` änderbar.
 
 ## Preisupdates
 
-- Das Intervall in Setup/Settings steuert den internen Auto-Refresh der App.
-- Optional kann zusaetzlich ein systemd Timer als Fallback genutzt werden (siehe `docs/OPERATIONS.md`).
-- Health-Status zeigt Auto-Refresh unter `GET /health` -> `auto_refresh`.
+Der interne Scheduler läuft als Daemon-Thread. Status und letzter Lauf sind unter `GET /health` → `auto_refresh` einsehbar. Optional kann zusätzlich ein systemd-Timer als Fallback eingerichtet werden (siehe `docs/OPERATIONS.md`).
 
 ## Telegram-Zusammenfassung
 
-- Optional aktivierbar in Setup/Settings.
-- Konfigurierbar: Intervall in Tagen + Versandzeit (`HH:MM`, Server-Zeitzone).
-- Versand laeuft ueber den internen Scheduler.
-- Health-Status zeigt Versand unter `GET /health` -> `summary`.
+Aktivierbar in Setup/Settings. Konfigurierbar: Intervall in Tagen + Versandzeit (`HH:MM`, Serverzeit). Inhalt: Top-3-Gewinner, Top-3-Verlierer, wertvollste Items, Gewinn vs. Kaufpreis. Manueller Versand über „Send now" im Settings-Bereich möglich.
 
 ## Sicherheit
 
-- Zugriffsumfang ist konfigurierbar (`nur lokal` oder `lokales Netzwerk`).
-- Telegram-Zugangsdaten werden verschluesselt in SQLite (`secret_store`) gespeichert.
-- Allgemeine Setup-Werte liegen in `app_config`.
-
-## Dokumentation
-
-- Architektur: `docs/ARCHITECTURE.md`
-- Entscheidungen: `docs/DECISIONS.md`
-- Betrieb: `docs/OPERATIONS.md`
-- Intel NUC + Proxmox: `docs/DEPLOY_INTEL_NUC_PROXMOX.md`
+- Zugriffs-Scope konfigurierbar: `nur lokal` oder `lokales Netzwerk`
+- Telegram-Zugangsdaten werden verschlüsselt in SQLite (`secret_store`) abgelegt
+- Lock-Mechanismus verhindert parallele Scheduler-Läufe (SQLite `BEGIN IMMEDIATE`)
 
 ## Projektstruktur
 
 ```text
 app/
-  config.py
-  db.py
+  config.py               Flask-Konfiguration (Env-Variablen)
+  db.py                   SQLite-Connection-Helper
   domain/
+    constants.py          Geteilte Konstanten (STEAM_FEE_RATE)
+    models.py             Datenklassen (ItemView, SelectedItemView)
   infrastructure/
+    secret_store.py       Verschlüsselung für Secrets
+    steam_client.py       Steam-Market-API-Client
+    telegram_client.py    Telegram-Bot-Client
   repositories/
+    config_repository.py  Konfiguration & Secrets (SQLite)
+    item_repository.py    Items, Preise, Alerts (SQLite)
   services/
+    item_service.py       Item-Logik, Preisberechnung
+    price_scheduler_service.py  Auto-Refresh & Summary-Scheduler
+    setup_service.py      Setup-Wizard, Theme-Verwaltung
+    summary_service.py    Portfolio-Zusammenfassung
   web/
-run.py
-templates/
+    routes_health.py      GET /health
+    routes_items.py       Item-CRUD, Alerts, Refresh
+    routes_setup.py       Setup, Settings, Context Processor
+run.py                    Einstiegspunkt
+templates/                Jinja2-Templates
 static/
+  css/theme.css           CSS Custom Properties, Themes, Glow-Effekte
+  js/glow-effects.js      Cursor-Spotlight per Karte (mousemove)
+  js/chart-helpers.js     Chart.js-Hilfsfunktionen
 scripts/
+  legacy_app.py           Alter monolithischer Stand (Referenz)
+docs/
+  ARCHITECTURE.md
+  DECISIONS.md
+  OPERATIONS.md
+  DEPLOY_INTEL_NUC_PROXMOX.md
 ```
 
-## Hinweis
+## Dokumentation
 
-`scripts/legacy_app.py` bleibt als Referenz auf den alten monolithischen Stand enthalten.
+- Architektur & Schichten: `docs/ARCHITECTURE.md`
+- Designentscheidungen: `docs/DECISIONS.md`
+- Betrieb & systemd: `docs/OPERATIONS.md`
+- Deployment Intel NUC + Proxmox: `docs/DEPLOY_INTEL_NUC_PROXMOX.md`
