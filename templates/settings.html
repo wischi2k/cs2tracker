@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-2xl space-y-6">
+  <div>
+    <h2 class="text-lg font-semibold">Einstellungen</h2>
+    <p class="text-sm text-slate-300">Konfiguration nach dem Onboarding aendern.</p>
+  </div>
+
+  <section class="bg-slate-800 rounded-xl p-4 space-y-3 border border-slate-700">
+    <h3 class="font-medium">Allgemein</h3>
+    <form method="post" action="{{ url_for('settings_general') }}" class="space-y-4">
+      <div>
+        <label class="block text-sm mb-1">Preisupdate-Intervall (Minuten)</label>
+        <input type="number" min="5" max="1440" name="price_update_interval_minutes" value="{{ interval }}" class="w-full bg-slate-900 rounded px-3 py-2">
+        <p class="text-xs text-slate-400 mt-1">Steuert den internen Auto-Refresh der App. Ein externer systemd/cron Job ist optionaler Fallback.</p>
+      </div>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" name="notifications_enabled" {{ 'checked' if notifications_enabled else '' }}>
+        Benachrichtigungen aktivieren
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" name="summary_enabled" {{ 'checked' if summary_enabled else '' }}>
+        Telegram-Zusammenfassung aktivieren
+      </label>
+      <div>
+        <label class="block text-sm mb-1">Zusammenfassung: Intervall (Tage)</label>
+        <input type="number" min="1" max="365" name="summary_interval_days" value="{{ summary_interval_days }}" class="w-full bg-slate-900 rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Zusammenfassung: Versandzeit (HH:MM)</label>
+        <input type="time" name="summary_send_time" value="{{ summary_send_time }}" class="w-full bg-slate-900 rounded px-3 py-2">
+        <p class="text-xs text-slate-400 mt-1">Die Uhrzeit verwendet die Server-Zeitzone.</p>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Zugriff auf Web-UI</label>
+        <select name="ui_access_scope" class="w-full bg-slate-900 rounded px-3 py-2">
+          <option value="private_network" {{ 'selected' if ui_access_scope == 'private_network' else '' }}>
+            Lokales Netzwerk (empfohlen)
+          </option>
+          <option value="local_only" {{ 'selected' if ui_access_scope == 'local_only' else '' }}>
+            Nur lokal auf dem Server
+          </option>
+        </select>
+      </div>
+      <!-- ── Theme-Switcher ── -->
+      <div>
+        <label class="block text-sm font-medium mb-2">Design / Theme</label>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+
+          <label class="theme-swatch {{ 'selected' if ui_theme == 'dark' else '' }}">
+            <input type="radio" name="ui_theme" value="dark" {{ 'checked' if ui_theme == 'dark' else '' }}>
+            <div class="theme-dots">
+              <div class="theme-dot" style="background:#0b0f17"></div>
+              <div class="theme-dot" style="background:#121821"></div>
+              <div class="theme-dot" style="background:#39FF14"></div>
+            </div>
+            <div>
+              <div class="theme-label">Standard Dark</div>
+              <div class="theme-desc">Klassisches Dunkel</div>
+            </div>
+          </label>
+
+          <label class="theme-swatch {{ 'selected' if ui_theme == 'midnight-jungle' else '' }}">
+            <input type="radio" name="ui_theme" value="midnight-jungle" {{ 'checked' if ui_theme == 'midnight-jungle' else '' }}>
+            <div class="theme-dots">
+              <div class="theme-dot" style="background:#0E1B14"></div>
+              <div class="theme-dot" style="background:#0B3D2E"></div>
+              <div class="theme-dot" style="background:#39FF14"></div>
+            </div>
+            <div>
+              <div class="theme-label">Midnight Jungle Glow</div>
+              <div class="theme-desc">Mystisch, botanisch, neon</div>
+            </div>
+          </label>
+
+          <label class="theme-swatch {{ 'selected' if ui_theme == 'arcade-glow' else '' }}">
+            <input type="radio" name="ui_theme" value="arcade-glow" {{ 'checked' if ui_theme == 'arcade-glow' else '' }}>
+            <div class="theme-dots">
+              <div class="theme-dot" style="background:#0A0A0A"></div>
+              <div class="theme-dot" style="background:#1A0B2E"></div>
+              <div class="theme-dot" style="background:#39FF14"></div>
+            </div>
+            <div>
+              <div class="theme-label">Arcade Glow Nights</div>
+              <div class="theme-desc">Retro-futuristisch, Neon-lit</div>
+            </div>
+          </label>
+
+          <label class="theme-swatch {{ 'selected' if ui_theme == 'lime-punch' else '' }}">
+            <input type="radio" name="ui_theme" value="lime-punch" {{ 'checked' if ui_theme == 'lime-punch' else '' }}>
+            <div class="theme-dots">
+              <div class="theme-dot" style="background:#0B0F14"></div>
+              <div class="theme-dot" style="background:#2A2F36"></div>
+              <div class="theme-dot" style="background:#FFB000"></div>
+            </div>
+            <div>
+              <div class="theme-label">Lime Punch Charcoal</div>
+              <div class="theme-desc">Urban, high-contrast, elektrisch</div>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
+      <div>
+        <button class="px-3 py-2 rounded bg-amber-600 hover:bg-amber-500">Speichern</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-slate-800 rounded-xl p-4 space-y-3 border border-slate-700">
+    <h3 class="font-medium">Telegram</h3>
+    <div class="text-xs {{ 'text-green-400' if telegram_configured else 'text-slate-400' }}">
+      Status: {{ 'verbunden' if telegram_configured else 'nicht verbunden' }}
+    </div>
+    <form method="post" action="{{ url_for('settings_telegram') }}" class="space-y-3">
+      <div>
+        <label class="block text-sm mb-1">Bot Token</label>
+        <input type="text" name="bot_token" placeholder="123456:ABCdef..." class="w-full bg-slate-900 rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Chat ID</label>
+        <input type="text" name="chat_id" placeholder="123456789" class="w-full bg-slate-900 rounded px-3 py-2">
+      </div>
+      <div>
+        <button class="px-3 py-2 rounded bg-sky-700 hover:bg-sky-600">Telegram testen & speichern</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-slate-800 rounded-xl p-4 space-y-2 border border-slate-700">
+    <h3 class="font-medium">Summary-Status</h3>
+    <div class="text-sm text-slate-200">Aktiv: {{ 'ja' if summary_status.enabled else 'nein' }}</div>
+    <div class="text-sm text-slate-200">Letzter Status: {{ summary_status.last_status or '-' }}</div>
+    <div class="text-sm text-slate-200">Letzter Versand: {{ summary_last_sent_human }}</div>
+    <div class="text-sm text-slate-200">Aktive Lock bis: {{ summary_lock_until_human }}</div>
+    {% if summary_status.last_error %}
+      <div class="text-sm text-red-300 break-words">Letzter Fehler: {{ summary_status.last_error }}</div>
+    {% endif %}
+    <form method="post" action="{{ url_for('settings_summary_send_now') }}">
+      <button class="mt-2 px-3 py-2 rounded bg-emerald-700 hover:bg-emerald-600">Send now (Test)</button>
+    </form>
+    <p class="text-xs text-slate-400">Details auch unter <code>/health</code> -> <code>summary</code>.</p>
+  </section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="rounded bg-slate-800/60 p-6 max-w-3xl">
+  <h2 class="text-lg font-semibold mb-4">Item bearbeiten</h2>
+
+  <!-- Hauptformular (Name, Steam-URL oder Market-Hash, Kaufpreis) -->
+  <form method="post" action="{{ url_for('update_item', item_id=it.id, cat=sel_cat) }}" class="space-y-4">
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Anzeige-Name (optional)</label>
+      <input name="display_name" class="bg-slate-900/60 rounded px-3 py-2 w-full"
+             value="{{ it.name or '' }}" placeholder="z.B. AWP | Atheris (Field-Tested)">
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Steam-URL (Empfohlen)</label>
+      <input name="steam_url" class="bg-slate-900/60 rounded px-3 py-2 w-full"
+             value="{{ it.steam_url or '' }}"
+             placeholder="https://steamcommunity.com/market/listings/730/...">
+      <p class="text-xs text-gray-400 mt-1">Falls leer, wird <b>Market-Hash</b> verwendet.</p>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Market-Hash (exakt wie im Steam-Markt)</label>
+      <input name="market_hash" class="bg-slate-900/60 rounded px-3 py-2 w-full"
+             value="{{ it.market_hash or '' }}" placeholder="AWP | Atheris (Field-Tested)">
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Kaufpreis (€)</label>
+      <input name="buy_eur" type="number" step="0.01" class="bg-slate-900/60 rounded px-3 py-2 w-40"
+             value="{{ '%.2f'|format(it.buy) if it.buy is not none else '' }}" placeholder="z.B. 4.84">
+    </div>
+
+    <div class="flex gap-2">
+      <button class="btn bg-amber-600 hover:bg-amber-500">Speichern</button>
+      <a href="{{ url_for('item', item_id=it.id, cat=sel_cat) }}" class="btn bg-slate-600 hover:bg-slate-500">Abbrechen</a>
+    </div>
+  </form>
+
+  <!-- Verwaltung / Gefahrenbereich -->
+  <div class="mt-8 pt-6 border-t border-slate-700">
+    <h3 class="text-sm font-semibold text-gray-300 mb-3">Verwaltung</h3>
+    <div class="flex flex-wrap gap-3">
+      <!-- Deaktivieren/Aktivieren -->
+      <form method="post"
+            action="{{ url_for('set_item_status', item_id=it.id, cat=sel_cat) }}"
+            onsubmit="return confirm('{{ 'Item reaktivieren?' if not it.active else 'Item deaktivieren?' }}');">
+        <button class="btn {{ 'bg-emerald-600 hover:bg-emerald-500' if not it.active else 'bg-slate-600 hover:bg-slate-500' }}">
+          {{ 'Aktivieren' if not it.active else 'Deaktivieren' }}
+        </button>
+      </form>
+
+      <!-- Löschen -->
+      <form method="post"
+            action="{{ url_for('delete_item', item_id=it.id) }}"
+            onsubmit="return confirm('Wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.');">
+        <button class="btn bg-red-600 hover:bg-red-700">Löschen</button>
+      </form>
+    </div>
+    <p class="text-xs text-gray-400 mt-2">Hinweis: Deaktivierte Items werden nicht mehr abgefragt, bleiben aber in der Liste sichtbar.</p>
+  </div>
+</div>
+{% endblock %}

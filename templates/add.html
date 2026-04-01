@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-xl space-y-4">
+  <h2 class="text-lg font-semibold">Gegenstand hinzufuegen</h2>
+
+  {% if error %}
+    <div class="bg-red-900/40 border border-red-800 rounded px-3 py-2 text-sm text-red-200">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-3">
+    <div>
+      <label class="block text-sm mb-1">Steam-Market-URL</label>
+      <input name="steam_url" value="{{ it.steam_url or '' }}"
+             placeholder="https://steamcommunity.com/market/listings/730/AK-47%20%7C%20Redline%20%28Field-Tested%29"
+             class="w-full bg-slate-800 rounded px-3 py-2">
+      <p class="text-xs text-slate-400 mt-1">
+        Der Market-Hash wird automatisch aus der URL gelesen.
+      </p>
+    </div>
+
+    <div>
+      <label class="block text-sm mb-1">Name (optional, ueberschreibt automatisch ermittelten)</label>
+      <input name="name" value="{{ it.display_name or '' }}"
+             class="w-full bg-slate-800 rounded px-3 py-2">
+    </div>
+
+    <div>
+      <label class="block text-sm mb-1">Kaufpreis (optional, EUR)</label>
+      <input name="buy_eur" value="{{ it.buy_eur or '' }}" inputmode="decimal"
+             placeholder="z. B. 6,50"
+             class="w-full bg-slate-800 rounded px-3 py-2">
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button class="px-3 py-2 rounded bg-amber-600 hover:bg-amber-500">
+        Hinzufuegen
+      </button>
+      <a href="{{ url_for('index') }}" class="px-3 py-2 rounded bg-slate-700 hover:bg-slate-600">
+        Abbrechen
+      </a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
