@@ -302,9 +302,9 @@ html[data-theme] .hover\:bg-slate-500:hover  { background-color: var(--c-text-mu
 html[data-theme] .hover\:bg-slate-400:hover  { background-color: var(--c-text-2)                           !important; }
 
 /* Ränder */
-html[data-theme] .border-slate-700           { border-color: var(--c-border-hi)                           !important; }
-html[data-theme] .border-slate-700\/50       { border-color: rgba(var(--c-border-hi), .50)                !important; }
-html[data-theme] .border-slate-600           { border-color: var(--c-border)                              !important; }
+html[data-theme] .border-slate-700           { border-color: var(--c-border-hi)  !important; }
+html[data-theme] .border-slate-700\/50       { border-color: var(--c-border)     !important; }   /* /50 -> leichtere Border-Stufe */
+html[data-theme] .border-slate-600           { border-color: var(--c-border)     !important; }
 
 /* Texte */
 html[data-theme] .text-slate-100             { color: var(--c-text)                                       !important; }
