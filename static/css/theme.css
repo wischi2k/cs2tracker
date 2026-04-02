@@ -311,9 +311,18 @@ html[data-theme] .text-slate-400            { color: var(--c-text-muted)        
   animation: selected-card-glow 2s ease-in-out infinite,
              card-border-spin    3s linear       infinite;
   position: relative;
+  /* Bug-Fix: overflow:visible damit ::after (Conic-Border) außerhalb der Karte
+     rendert und nicht nach innen geclipt wird (overflow:hidden von glow-card-inner
+     hat den Gradient in den Karteninhalt hineingeflutet). */
+  overflow: visible !important;
 }
 
-/* Rotierender Conic-Gradient-Ring hinter der selektierten Karte */
+/* Spotlight-::before auf die Kartenfläche begrenzen, da overflow jetzt visible ist */
+.card-selected.glow-card-inner::before {
+  clip-path: inset(0 round 12px);
+}
+
+/* Rotierender Conic-Gradient-Ring — außen am Rand, nicht im Inneren */
 .card-selected::after {
   content: '';
   position: absolute;
@@ -322,13 +331,13 @@ html[data-theme] .text-slate-400            { color: var(--c-text-muted)        
   background: conic-gradient(
     from var(--card-border-angle),
     transparent                    0%,
-    rgba(var(--c-accent-rgb), .90) 18%,
-    rgba(var(--c-accent-rgb), .35) 35%,
+    rgba(var(--c-accent-rgb), .70) 18%,
+    rgba(var(--c-accent-rgb), .25) 35%,
     transparent                    55%
   );
   z-index: 0;
   pointer-events: none;
-  filter: blur(1px);
+  filter: blur(0.8px);
 }
 /* Innerer Inhalt bleibt über dem Glow-Ring */
 .card-selected > * {
