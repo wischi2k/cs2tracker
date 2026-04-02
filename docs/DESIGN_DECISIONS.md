@@ -3,6 +3,10 @@
 Dieses Dokument hält alle bewussten Design-Entscheidungen und ihre Begründungen fest,
 damit spätere Änderungen nachvollziehbar bleiben.
 
+> **Aktuelle Version: Theme-System v3** — Themes als eigenständige visuelle Modi,
+> nicht nur Farb-Varianten. Flächen-Hierarchie, Shadow-Charakter, Chart-Integration
+> und Selected-States sind jetzt pro Theme individuell definiert.
+
 ---
 
 ## 1. Theme-System
@@ -264,7 +268,69 @@ damit Datenpunkte in verschiedenen Themes immer dieselbe Bedeutung haben.
 
 ---
 
-## 10. Bekannte Design-Kompromisse
+## 10. Diagnose v2 → v3: Warum Farbwechsel allein keine echten Themes erzeugen
+
+**Problem v2:** Die Themes hatten unterschiedliche Farbpaletten, aber dieselbe räumliche und
+funktionale Logik. Flächen-Hierarchie, Border-Stärken, Shadow-Charakter, Chart-Integration
+und Selected-States waren nahezu identisch. Dadurch wirkten die Nicht-Standard-Themes
+wie Re-Skins statt eigene Modi.
+
+**Ursache:** Ein Theme ist mehr als eine Farbpalette. Jeder Modus braucht eine eigene Ausprägung von:
+Surface-Hierarchie, Kontraststufen, Panel-Trennung, Border-Präsenz, Shadow-Charakter,
+Selected-State-Gewichtung, Chart-Integration, wahrgenommener Dichte.
+
+**Lösung v3:**
+
+### Neue Flächen-Tokens (alle Themes)
+
+```css
+--c-panel       → Haupt-Panels und Detail-Bereiche
+--c-sidebar-bg  → Sidebar (von Surface entkoppelt)
+--c-chart-bg    → Chart-Container-Hintergrund
+```
+
+Damit können z.B. `dark` und `highlighter-noir` dieselbe Oberflächenhierarchie grundsätzlich
+teilen, aber `cleanroom-lime` den Chart-Bereich explizit als hellstes Element hervorheben.
+
+### Theme-spezifische Shadow-Tokens
+
+```css
+--c-shadow-rgb  → Basis-Ton für alle Schatten (schwarz für dark, grünlich für safety-lime, navy für cleanroom-lime)
+--shadow-card   → pro Theme überschrieben
+--shadow-panel  → pro Theme überschrieben
+```
+
+`dark` und `highlighter-noir` nutzen tiefe schwarze Schatten für Tiefenwirkung.
+`safety-lime` nutzt sehr helle Schatten (Utility-Interface, kein „schwebender" Charakter).
+`cleanroom-lime` nutzt minimalste Schatten — fast nur Separation.
+
+### Theme-spezifische `.card-selected` States
+
+Statt einer globalen `card-selected`-Logik hat jedes Theme seinen eigenen Stil:
+
+| Theme | Charakter des Selected-State |
+|-------|------------------------------|
+| `dark` | Ruhige Tönung + dezente Border + Steel-Cyan-Glow |
+| `highlighter-noir` | Elegante Tiefe, `inset`-Glanz, präzise Akzent-Border |
+| `safety-lime` | Deutlichere Signal-Tint, doppelte Border-Schicht |
+| `cleanroom-lime` | Minimale Tönung, weißer Top-Highlight-Shadow |
+
+### Chart als Teil des Themes
+
+- `chart-wrap`-Klasse auf Chart-Containern in Templates
+- `--chart-1` pro Theme unterschiedlich: blau-Varianten je nach Charakter
+- `--c-chart-bg` steuert den Chart-Hintergrund theme-sensitiv
+- `--chart-grid` pro Theme angepasst (dunkler/heller je nach Basis)
+
+### `highlighter-noir`-Akzent: `#7CFF6B` statt `#39FF14`
+
+Reines Neon-Lime (`#39FF14`) passt zum Gaming-/Dashboard-Charakter von `dark`, wirkt aber
+zu grell für das Premium-/Studio-Feeling von `highlighter-noir`. `#7CFF6B` ist ein
+etwas weicheres, wärmeres Grün — immer noch klar, aber nicht mehr so hart-neonig.
+
+---
+
+## 11. Bekannte Design-Kompromisse
 
 | Thema | Kompromiss | Begründung |
 |-------|------------|------------|

@@ -1,26 +1,39 @@
 /* =============================================================
-   CS2 TRACKER — THEME SYSTEM v2
+   CS2 TRACKER — THEME SYSTEM v3
    Technik: CSS Custom Properties + data-theme auf <html>
 
-   Architektur-Entscheidung:
-   Accent, Glow und Focus sind getrennte Variablen.
-   --c-accent      → aktive Zustände, Navigation, kleine Signale
+   Variablen-Hierarchie:
+   --c-accent      → Aktive Zustände, Navigation, kleine Signale
    --c-accent-2    → CTA-Buttons, sekundäre Aktionen
-   --c-focus-rgb   → Fokus-Ringe (Input, Tab-Navigation)
+   --c-focus-rgb   → Fokus-Ringe (Keyboard-Navigation)
    --c-glow-rgb    → Schatten, Halos, Spotlight-Effekte
+   --c-shadow-rgb  → Shadow-Basiston (schwarz für dark, grünlich für utility usw.)
+
+   Flächen-Hierarchie (jedes Theme hat eigene Ebenen):
+   --c-bg          → Seitenhintergrund
+   --c-panel       → Haupt-Panels, Detail-Bereiche
+   --c-sidebar-bg  → Sidebar-Fläche
+   --c-chart-bg    → Chart-Container
+   --c-surface     → Cards, normale Flächenelemente
+   --c-surface-2   → Inputs, Hover-States, Sekundärflächen
+   --c-interactive → bg-slate-700 Äquivalent, Edit-Buttons, Iconplatzhalter
+   --c-interactive-hi → bg-slate-600 / Hover-States auf interactive
    ============================================================= */
 
 
 /* ── 1. STANDARD DARK ────────────────────────────────────────── */
-/* Neutrales, zeitloses Dashboard-Theme. Glow-Effekte gedämpft:
-   statt Neon-Grün als Leuchtfarbe → kühles Steel-Cyan für Halos. */
+/* Neutrales, zeitloses Dashboard-Theme.
+   Glow: Steel-Cyan statt Neon-Grün → ruhiger, erwachsener. */
 :root,
 html[data-theme="dark"] {
   --c-bg:              #0b0f17;
+  --c-panel:           #10161f;
+  --c-sidebar-bg:      #10161f;
+  --c-chart-bg:        #121821;
   --c-surface:         #121821;
   --c-surface-2:       #1a2232;
-  --c-interactive:     #243044;   /* bg-slate-700 Äquivalent */
-  --c-interactive-hi:  #2e3d58;   /* bg-slate-600 / hover */
+  --c-interactive:     #243044;
+  --c-interactive-hi:  #2e3d58;
 
   --c-bg-rgb:          11,15,23;
   --c-surface-rgb:     18,24,33;
@@ -35,19 +48,19 @@ html[data-theme="dark"] {
   --c-text-muted:      #94a3b8;
   --c-input-bg:        #0e131a;
 
-  --c-accent:          #39FF14;        /* Lime — aktive States, Marker     */
+  --c-accent:          #39FF14;
   --c-accent-rgb:      57,255,20;
   --c-accent-dim:      rgba(57,255,20,.08);
 
-  --c-accent-2:        #d97706;        /* Amber — CTA                      */
+  --c-accent-2:        #d97706;
   --c-accent-2-rgb:    217,119,6;
 
-  --c-focus:           #7dd3fc;        /* Steel-Cyan — Fokusring            */
+  --c-focus:           #7dd3fc;
   --c-focus-rgb:       125,211,252;
+  --c-glow-rgb:        125,211,252;
 
-  --c-glow-rgb:        125,211,252;    /* Cyan — Schatten/Halo, kein Neon  */
+  --c-shadow-rgb:      0,0,0;
 
-  /* Backward-Compat für btn-Klassen */
   --c-btn-primary:     var(--c-interactive);
   --c-btn-action:      var(--c-accent-2);
   --c-btn-action-text: #0b0f17;
@@ -55,39 +68,47 @@ html[data-theme="dark"] {
 
 
 /* ── 2. HIGHLIGHTER NOIR ─────────────────────────────────────── */
-/* Edles, modernes Dark-Theme. Lime nur als scharfer Signal-Marker.
-   Alles andere: kühle Grau-Layer ohne Gaming-Charakter. */
+/* Edles, modernes Product-UI-Theme. Studio-/Editorial-Charakter.
+   Lime nur als scharfer Signal-Marker, keine Leucht-Atmosphäre.
+   CTA und Glow über elegantes Teal. */
 html[data-theme="highlighter-noir"] {
-  --c-bg:              #101215;
-  --c-surface:         #171a1f;
-  --c-surface-2:       #1f2328;
+  --c-bg:              #0f1114;
+  --c-panel:           #14181d;
+  --c-sidebar-bg:      #15191e;
+  --c-chart-bg:        #12161b;
+  --c-surface:         #171b21;
+  --c-surface-2:       #1e242b;
   --c-interactive:     #272d35;
   --c-interactive-hi:  #323940;
 
-  --c-bg-rgb:          16,18,21;
-  --c-surface-rgb:     23,26,31;
-  --c-surface-2-rgb:   31,35,40;
+  --c-bg-rgb:          15,17,20;
+  --c-surface-rgb:     23,27,33;
+  --c-surface-2-rgb:   30,36,43;
   --c-interactive-rgb: 39,45,53;
 
-  --c-border:          rgba(233,236,239,.09);
-  --c-border-hi:       rgba(233,236,239,.16);
+  --c-border:          rgba(255,255,255,.07);
+  --c-border-hi:       rgba(255,255,255,.14);
 
-  --c-text:            #e9ecef;
-  --c-text-2:          #ced4da;
-  --c-text-muted:      #98a2ad;
+  --c-text:            #edf1f5;
+  --c-text-2:          #c7d0d9;
+  --c-text-muted:      #8b98a5;
   --c-input-bg:        #0d0f12;
 
-  --c-accent:          #39FF14;        /* Lime — nur aktive Zustände        */
-  --c-accent-rgb:      57,255,20;
-  --c-accent-dim:      rgba(57,255,20,.07);
+  --c-accent:          #7CFF6B;        /* etwas kontrollierter als reines Neon-Lime */
+  --c-accent-rgb:      124,255,107;
+  --c-accent-dim:      rgba(124,255,107,.06);
 
-  --c-accent-2:        #2dd4bf;        /* Teal — CTA / sekundäre Aktion    */
-  --c-accent-2-rgb:    45,212,191;
+  --c-accent-2:        #5eead4;        /* elegantes Teal */
+  --c-accent-2-rgb:    94,234,212;
 
-  --c-focus:           #94a3b8;        /* Slate — dezenter Fokusring        */
-  --c-focus-rgb:       148,163,184;
+  --c-focus:           #a5b4c3;
+  --c-focus-rgb:       165,180,195;
+  --c-glow-rgb:        94,234,212;     /* Teal-Halo */
 
-  --c-glow-rgb:        45,212,191;     /* Teal — Halo folgt dem CTA-Ton    */
+  --c-shadow-rgb:      0,0,0;
+
+  --shadow-card:       0 8px 22px rgba(0,0,0,.22);
+  --shadow-panel:      0 14px 40px rgba(0,0,0,.26);
 
   --c-btn-primary:     var(--c-interactive);
   --c-btn-action:      var(--c-accent-2);
@@ -96,82 +117,96 @@ html[data-theme="highlighter-noir"] {
 
 
 /* ── 3. SAFETY LIME ──────────────────────────────────────────── */
-/* Helles Utility-/Wayfinding-Theme. Weiß als Hauptfläche,
-   Concrete-Grau als Struktur, Lime für Marker, Gelb für CTA.
-   Achtung: Lime und Gelb sparsam einsetzen — sonst kippt
-   das Theme in Richtung Warnfläche. */
+/* Helles Utility-/Wayfinding-Theme. Off-White statt Reinweiß,
+   Beton-Grün als Basis. Lime für Marker, Utility-Yellow für CTA.
+   Stärkere Borders — mehr funktionale Trennung. */
 html[data-theme="safety-lime"] {
-  --c-bg:              #ffffff;
-  --c-surface:         #f3f4f5;
-  --c-surface-2:       #e7eaed;
-  --c-interactive:     #d1d5db;
-  --c-interactive-hi:  #c3c8cf;
+  --c-bg:              #eef1ec;        /* off-white / Beton-Stich */
+  --c-panel:           #f6f7f3;
+  --c-sidebar-bg:      #f1f3ee;
+  --c-chart-bg:        #f8faf4;
+  --c-surface:         #fbfcf8;
+  --c-surface-2:       #e3e7de;
+  --c-interactive:     #cdd3c8;
+  --c-interactive-hi:  #c4cbbf;
 
-  --c-bg-rgb:          255,255,255;
-  --c-surface-rgb:     243,244,245;
-  --c-surface-2-rgb:   231,234,237;
-  --c-interactive-rgb: 209,213,219;
+  --c-bg-rgb:          238,241,236;
+  --c-surface-rgb:     251,252,248;
+  --c-surface-2-rgb:   227,231,222;
+  --c-interactive-rgb: 205,211,200;
 
-  --c-border:          rgba(60,64,67,.13);
-  --c-border-hi:       rgba(60,64,67,.24);
+  --c-border:          rgba(50,58,47,.18);
+  --c-border-hi:       rgba(50,58,47,.28);
 
-  --c-text:            #1f2328;
-  --c-text-2:          #374151;
-  --c-text-muted:      #5f6b76;
-  --c-input-bg:        #f3f4f5;
+  --c-text:            #1d241d;
+  --c-text-2:          #384238;
+  --c-text-muted:      #5c675d;
+  --c-input-bg:        #f1f3ee;
 
-  --c-accent:          #2d9900;        /* Satter Lime-Grün — Marker, aktiv  */
-  --c-accent-rgb:      45,153,0;
-  --c-accent-dim:      rgba(45,153,0,.10);
+  --c-accent:          #4f9e16;        /* sattes funktionales Signal-Grün */
+  --c-accent-rgb:      79,158,22;
+  --c-accent-dim:      rgba(79,158,22,.08);
 
-  --c-accent-2:        #e6b800;        /* Construction-Yellow — CTA         */
-  --c-accent-2-rgb:    230,184,0;
+  --c-accent-2:        #d4a900;        /* Utility-Yellow, etwas gedeckt */
+  --c-accent-2-rgb:    212,169,0;
 
-  --c-focus:           #65a30d;        /* Lime-grün — Fokusring             */
-  --c-focus-rgb:       101,163,13;
+  --c-focus:           #6ea626;
+  --c-focus-rgb:       110,166,38;
+  --c-glow-rgb:        110,166,38;
 
-  --c-glow-rgb:        101,163,13;
+  --c-shadow-rgb:      34,40,34;
 
-  --c-btn-primary:     #374151;
+  --shadow-card:       0 3px 10px rgba(34,40,34,.06);
+  --shadow-panel:      0 8px 24px rgba(34,40,34,.08);
+
+  --c-btn-primary:     #384238;
   --c-btn-action:      var(--c-accent-2);
-  --c-btn-action-text: #1f2328;
+  --c-btn-action-text: #1d241d;
 }
 
 
 /* ── 4. CLEANROOM LIME ───────────────────────────────────────── */
-/* Helles, präzises Daten-Theme. Maximale Klarheit und lange
-   Lesbarkeit. Lime ist reiner Signalton, Blau als ruhiger CTA. */
+/* Präzises Daten-/Analyse-Theme. Kühles Off-White, klare Hierarchie.
+   Lime nur als Signal, Blau als professionelle CTA-Farbe.
+   Glow = Blau → Präzision statt Leuchtstimmung. */
 html[data-theme="cleanroom-lime"] {
-  --c-bg:              #f8fafc;
+  --c-bg:              #f3f7fb;        /* kühles, technisches Hell */
+  --c-panel:           #f8fbfe;
+  --c-sidebar-bg:      #f6f9fc;
+  --c-chart-bg:        #fbfdff;
   --c-surface:         #ffffff;
-  --c-surface-2:       #eef2f6;
-  --c-interactive:     #e2e8f0;
-  --c-interactive-hi:  #d4dce8;
+  --c-surface-2:       #edf3f8;
+  --c-interactive:     #dce5ee;
+  --c-interactive-hi:  #d0dae5;
 
-  --c-bg-rgb:          248,250,252;
+  --c-bg-rgb:          243,247,251;
   --c-surface-rgb:     255,255,255;
-  --c-surface-2-rgb:   238,242,246;
-  --c-interactive-rgb: 226,232,240;
+  --c-surface-2-rgb:   237,243,248;
+  --c-interactive-rgb: 220,229,238;
 
-  --c-border:          rgba(51,65,85,.11);
-  --c-border-hi:       rgba(51,65,85,.20);
+  --c-border:          rgba(71,85,105,.14);
+  --c-border-hi:       rgba(71,85,105,.22);
 
   --c-text:            #0f172a;
   --c-text-2:          #334155;
-  --c-text-muted:      #475569;
+  --c-text-muted:      #5b6b7f;
   --c-input-bg:        #f1f5f9;
 
-  --c-accent:          #2d9900;        /* Lime als Signal                   */
-  --c-accent-rgb:      45,153,0;
-  --c-accent-dim:      rgba(45,153,0,.09);
+  --c-accent:          #4f9e16;        /* Lime als reiner Signalton */
+  --c-accent-rgb:      79,158,22;
+  --c-accent-dim:      rgba(79,158,22,.07);
 
-  --c-accent-2:        #2563eb;        /* Blau — CTA / ruhige Aktion        */
+  --c-accent-2:        #2563eb;        /* Blau — ruhige, professionelle CTA */
   --c-accent-2-rgb:    37,99,235;
 
-  --c-focus:           #65a30d;
-  --c-focus-rgb:       101,163,13;
+  --c-focus:           #3b82f6;
+  --c-focus-rgb:       59,130,246;
+  --c-glow-rgb:        59,130,246;     /* Blau-Präzision statt Lime-Glow */
 
-  --c-glow-rgb:        101,163,13;
+  --c-shadow-rgb:      15,23,42;
+
+  --shadow-card:       0 2px 8px rgba(15,23,42,.05);
+  --shadow-panel:      0 8px 22px rgba(15,23,42,.07);
 
   --c-btn-primary:     #475569;
   --c-btn-action:      var(--c-accent-2);
@@ -180,80 +215,105 @@ html[data-theme="cleanroom-lime"] {
 
 
 /* =============================================================
-   GLOW-HILFSVARIABLEN
-   Alle Glow-Effekte nutzen --c-glow-rgb — NICHT --c-accent-rgb.
-   Dadurch kann jedes Theme seinen eigenen Leucht-Ton haben.
+   GLOW- UND SHADOW-HILFSVARIABLEN
+   Alle Glow-Effekte: --c-glow-rgb (theme-abhängig)
+   Alle Schatten: --c-shadow-rgb (theme-abhängig)
    ============================================================= */
 :root {
   --radius-md: 12px;
 
+  /* Glow — 1px Halo + weicher Schatten (kein gestapelter Neon-Glow) */
   --glow-xs:
     0 0 0 1px rgba(var(--c-glow-rgb), .18);
-
   --glow-sm:
     0 0 0 1px rgba(var(--c-glow-rgb), .20),
-    0 6px 20px rgba(0,0,0,.12);
-
+    0 6px 20px rgba(var(--c-shadow-rgb), .12);
   --glow-md:
     0 0 0 1px rgba(var(--c-glow-rgb), .24),
-    0 10px 30px rgba(0,0,0,.16),
+    0 10px 30px rgba(var(--c-shadow-rgb), .16),
     0 0 40px 8px rgba(var(--c-glow-rgb), .08);
 
   --focus-ring:
     0 0 0 2px rgba(var(--c-focus-rgb), .30);
 
-  /* Chart-Tokens — theme-unabhängige Daten-Farben */
-  --chart-1: var(--c-accent);
-  --chart-2: #60a5fa;
-  --chart-3: #f59e0b;
-  --chart-4: #f472b6;
+  /* Schatten — Fallback-Werte; Themes überschreiben wo nötig */
+  --shadow-soft:
+    0 2px 8px rgba(var(--c-shadow-rgb), .08);
+  --shadow-card:
+    0 6px 16px rgba(var(--c-shadow-rgb), .12);
+  --shadow-panel:
+    0 10px 30px rgba(var(--c-shadow-rgb), .14);
+
+  /* Chart-Tokens — Fallback; pro Theme unten überschrieben */
+  --chart-1: #60a5fa;
+  --chart-2: #f59e0b;
+  --chart-3: #f472b6;
+  --chart-4: #a78bfa;
   --chart-grid: rgba(148,163,184,.15);
+}
+
+/* Chart-Paletten pro Theme */
+html[data-theme="dark"] {
+  --chart-1: #60a5fa;
+  --chart-grid: rgba(148,163,184,.18);
+}
+html[data-theme="highlighter-noir"] {
+  --chart-1: #7dd3fc;              /* Ice Blue */
+  --chart-grid: rgba(148,163,184,.12);
+}
+html[data-theme="safety-lime"] {
+  --chart-1: #3b82f6;              /* Blau auf hellem BG gut lesbar */
+  --chart-grid: rgba(95,105,95,.16);
+}
+html[data-theme="cleanroom-lime"] {
+  --chart-1: #2563eb;              /* tiefes Blau — stärkster Kontrast */
+  --chart-grid: rgba(148,163,184,.16);
 }
 
 
 /* =============================================================
    TAILWIND-ÜBERSCHREIBUNGEN
-   Kontext: Tailwind CDN generiert Klassen dynamisch.
-   Opacity-Modifier (/60) und hover:-Varianten erzeugen eigene
-   CSS-Klassenamen die separat überschrieben werden müssen.
+   Opacity-Modifier (/60 etc.) und hover:-Varianten erzeugen
+   eigene CSS-Klassenamen → separat überschreiben.
    ============================================================= */
 
 /* Basis */
-html[data-theme] body                        { background-color: var(--c-bg)                          !important; color: var(--c-text) !important; }
+html[data-theme] body                        { background-color: var(--c-bg)                              !important; color: var(--c-text) !important; }
 
 /* Hintergründe — Flächen */
-html[data-theme] .bg-slate-900               { background-color: var(--c-bg)                          !important; }
-html[data-theme] .bg-slate-900\/60           { background-color: rgba(var(--c-bg-rgb), .60)            !important; }
-html[data-theme] .bg-slate-800               { background-color: var(--c-surface-2)                   !important; }
-html[data-theme] .bg-slate-800\/60           { background-color: rgba(var(--c-surface-2-rgb), .60)     !important; }
-html[data-theme] .bg-slate-800\/70           { background-color: rgba(var(--c-surface-2-rgb), .70)     !important; }
-html[data-theme] .bg-slate-800\/40           { background-color: rgba(var(--c-surface-2-rgb), .40)     !important; }
-html[data-theme] .bg-slate-700               { background-color: var(--c-interactive)                  !important; }
-html[data-theme] .bg-slate-700\/60           { background-color: rgba(var(--c-interactive-rgb), .60)   !important; }
-html[data-theme] .bg-slate-700\/70           { background-color: rgba(var(--c-interactive-rgb), .70)   !important; }
-html[data-theme] .bg-slate-600               { background-color: var(--c-interactive-hi)               !important; }
-html[data-theme] .bg-slate-500               { background-color: var(--c-text-muted)                   !important; }
-html[data-theme] .bg-slate-400               { background-color: var(--c-text-2)                       !important; }
+html[data-theme] .bg-slate-900               { background-color: var(--c-bg)                              !important; }
+html[data-theme] .bg-slate-900\/60           { background-color: rgba(var(--c-bg-rgb), .60)                !important; }
+html[data-theme] .bg-slate-800               { background-color: var(--c-surface-2)                       !important; }
+html[data-theme] .bg-slate-800\/60           { background-color: rgba(var(--c-surface-2-rgb), .60)         !important; }
+html[data-theme] .bg-slate-800\/70           { background-color: rgba(var(--c-surface-2-rgb), .70)         !important; }
+html[data-theme] .bg-slate-800\/40           { background-color: rgba(var(--c-surface-2-rgb), .40)         !important; }
+html[data-theme] .bg-slate-700               { background-color: var(--c-interactive)                      !important; }
+html[data-theme] .bg-slate-700\/60           { background-color: rgba(var(--c-interactive-rgb), .60)       !important; }
+html[data-theme] .bg-slate-700\/70           { background-color: rgba(var(--c-interactive-rgb), .70)       !important; }
+html[data-theme] .bg-slate-600               { background-color: var(--c-interactive-hi)                   !important; }
+html[data-theme] .bg-slate-500               { background-color: var(--c-text-muted)                       !important; }
+html[data-theme] .bg-slate-400               { background-color: var(--c-text-2)                           !important; }
 
 /* Hover-Varianten */
-html[data-theme] .hover\:bg-slate-800:hover  { background-color: var(--c-surface-2)                   !important; }
-html[data-theme] .hover\:bg-slate-700:hover  { background-color: var(--c-interactive)                  !important; }
-html[data-theme] .hover\:bg-slate-600:hover  { background-color: var(--c-interactive-hi)               !important; }
-html[data-theme] .hover\:bg-slate-500:hover  { background-color: var(--c-text-muted)                   !important; }
-html[data-theme] .hover\:bg-slate-400:hover  { background-color: var(--c-text-2)                       !important; }
+html[data-theme] .hover\:bg-slate-800:hover  { background-color: var(--c-surface-2)                       !important; }
+html[data-theme] .hover\:bg-slate-700:hover  { background-color: var(--c-interactive)                      !important; }
+html[data-theme] .hover\:bg-slate-600:hover  { background-color: var(--c-interactive-hi)                   !important; }
+html[data-theme] .hover\:bg-slate-500:hover  { background-color: var(--c-text-muted)                       !important; }
+html[data-theme] .hover\:bg-slate-400:hover  { background-color: var(--c-text-2)                           !important; }
 
 /* Ränder */
-html[data-theme] .border-slate-700           { border-color: var(--c-border-hi)                       !important; }
-html[data-theme] .border-slate-600           { border-color: var(--c-border)                          !important; }
+html[data-theme] .border-slate-700           { border-color: var(--c-border-hi)                           !important; }
+html[data-theme] .border-slate-700\/50       { border-color: rgba(var(--c-border-hi), .50)                !important; }
+html[data-theme] .border-slate-600           { border-color: var(--c-border)                              !important; }
 
 /* Texte */
-html[data-theme] .text-slate-100             { color: var(--c-text)                                   !important; }
-html[data-theme] .text-slate-200             { color: var(--c-text)                                   !important; }
-html[data-theme] .text-slate-300             { color: var(--c-text-2)                                 !important; }
-html[data-theme] .text-gray-300              { color: var(--c-text-2)                                 !important; }
-html[data-theme] .text-slate-400             { color: var(--c-text-muted)                             !important; }
-html[data-theme] .text-gray-400              { color: var(--c-text-muted)                             !important; }
-html[data-theme] .text-slate-500             { color: var(--c-text-muted)                             !important; }
+html[data-theme] .text-slate-100             { color: var(--c-text)                                       !important; }
+html[data-theme] .text-slate-200             { color: var(--c-text)                                       !important; }
+html[data-theme] .text-slate-300             { color: var(--c-text-2)                                     !important; }
+html[data-theme] .text-gray-300              { color: var(--c-text-2)                                     !important; }
+html[data-theme] .text-slate-400             { color: var(--c-text-muted)                                 !important; }
+html[data-theme] .text-gray-400              { color: var(--c-text-muted)                                 !important; }
+html[data-theme] .text-slate-500             { color: var(--c-text-muted)                                 !important; }
 
 
 /* =============================================================
@@ -266,20 +326,21 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
   border: 1px solid var(--c-border);
   border-radius: var(--radius-md);
   padding: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  box-shadow: var(--shadow-card);
   transition: box-shadow .18s ease, border-color .18s ease;
 }
 .card:hover {
-  border-color: rgba(var(--c-glow-rgb), .22);
-  box-shadow: var(--glow-sm);
+  border-color: var(--c-border-hi);
+  box-shadow: var(--shadow-panel);
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────── */
 .sidebar {
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  background: var(--c-sidebar-bg);
+  border: 1px solid var(--c-border-hi);
   border-radius: var(--radius-md);
   padding: 12px;
+  box-shadow: var(--shadow-soft);
 }
 
 .sidebar-item-active {
@@ -319,11 +380,18 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
 .btn-amber {
   background: var(--c-btn-action);
   color: var(--c-btn-action-text);
-  border-color: var(--c-btn-action);
+  border-color: rgba(var(--c-accent-2-rgb), .80);
 }
 .btn-amber:hover {
   filter: brightness(1.10);
   box-shadow: var(--glow-sm);
+}
+
+/* Light-Themes: Utility-Button ohne Gloss */
+html[data-theme="safety-lime"] .btn-amber:hover,
+html[data-theme="cleanroom-lime"] .btn-amber:hover {
+  box-shadow: var(--shadow-card);
+  filter: brightness(1.06);
 }
 
 /* ── Inputs ──────────────────────────────────────────────────── */
@@ -339,10 +407,44 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
   box-shadow: var(--focus-ring);
 }
 
+/* Native Elemente ohne explizite Klassen */
+html[data-theme] input:not([class*="bg-"]),
+html[data-theme] select:not([class*="bg-"]),
+html[data-theme] textarea:not([class*="bg-"]) {
+  background: var(--c-surface-2);
+  border-color: var(--c-border);
+  color: var(--c-text);
+}
+html[data-theme] input:focus,
+html[data-theme] select:focus,
+html[data-theme] textarea:focus {
+  border-color: rgba(var(--c-focus-rgb), .45) !important;
+  box-shadow: var(--focus-ring) !important;
+  outline: none !important;
+}
+
+/* ── Chart-Container ─────────────────────────────────────────── */
+.chart-wrap {
+  background: var(--c-chart-bg);
+  border: 1px solid var(--c-border);
+  box-shadow: var(--shadow-card);
+  border-radius: 16px;
+  overflow: hidden;
+}
+html[data-theme="highlighter-noir"] .chart-wrap {
+  border-color: rgba(255,255,255,.08);
+}
+html[data-theme="safety-lime"] .chart-wrap {
+  border-color: var(--c-border-hi);
+}
+html[data-theme="cleanroom-lime"] .chart-wrap {
+  border-color: rgba(71,85,105,.16);
+  box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(255,255,255,.80);
+}
+
 
 /* =============================================================
    SEMANTISCHE FARBEN — theme-unabhängig
-   Gewinn/Verlust müssen in allen Themes dieselbe Bedeutung haben.
    ============================================================= */
 .glow-positive {
   color: #4ade80;
@@ -357,13 +459,13 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
     0 0 12px rgba(248,113,113,.18);
 }
 
-/* Akzent-Glow — für aktive States, Icons */
+/* Akzent-Glow */
 .glow-accent {
   box-shadow: var(--glow-md) !important;
   border-color: rgba(var(--c-accent-rgb), .45) !important;
 }
 
-/* Pulsierender Alarm-Glow — nutzt jetzt --c-glow-rgb */
+/* Pulsierender Alarm-Glow */
 @keyframes glow-pulse {
   0%, 100% {
     box-shadow:
@@ -391,8 +493,8 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
 
 /* =============================================================
    INTERACTIVE CARD SPOTLIGHT (freefrontend / Stripe-Technik)
-   Nutzt --c-glow-rgb statt --c-accent-rgb für den Spotlight.
-   Opazität auf 6% reduziert für weniger visuelle Ermüdung.
+   Opazität 6%: subtil, keine visuelle Ermüdung.
+   Nutzt --c-glow-rgb → theme-eigener Leucht-Ton.
    ============================================================= */
 .glow-card-inner {
   position: relative;
@@ -418,32 +520,23 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
 
 
 /* =============================================================
-   AUSGEWÄHLTE KARTE (card-selected)
-   Design-Entscheidung v2: kein rotierender Conic-Gradient mehr.
-   Stattdessen: subtile Surface-Aufhellung + klarer Left-Bar-Marker
-   + sanfter Glow-Border. Theme-unabhängig wiedererkennbar,
-   bessere Zugänglichkeit, keine visuelle Ermüdung.
+   AUSGEWÄHLTE KARTE — theme-spezifische Selected States
+   Basis: Left-Bar-Marker + Gradient-Tint + Border
+   Pro Theme: eigene Intensität und Shadow-Charakter
    ============================================================= */
+
+/* Basis (alle Themes) */
 .card-selected {
   position: relative;
-  border-color: rgba(var(--c-accent-rgb), .40) !important;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(var(--c-accent-rgb), .05) 0%,
-      rgba(var(--c-accent-rgb), .015) 100%
-    ),
-    var(--c-surface) !important;
-  box-shadow: var(--glow-sm);
 }
 
-/* Left-Bar: klarer visueller Marker — unabhängig von Glow/Farbe */
+/* Left-Bar: universeller visueller Marker */
 .card-selected::after {
   content: '';
   position: absolute;
   inset: 3px auto 3px 0;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
+  width: 4px;
+  border-radius: 0 3px 3px 0;
   background: var(--c-accent);
   pointer-events: none;
   z-index: 3;
@@ -451,6 +544,46 @@ html[data-theme] .text-slate-500             { color: var(--c-text-muted)       
 .card-selected > * {
   position: relative;
   z-index: 1;
+}
+
+/* dark: ruhige Tönung, dezente Border */
+html[data-theme="dark"] .card-selected {
+  background:
+    linear-gradient(180deg, rgba(var(--c-accent-rgb), .05) 0%, rgba(var(--c-accent-rgb), .015) 100%),
+    var(--c-surface) !important;
+  border-color: rgba(var(--c-accent-rgb), .35) !important;
+  box-shadow: var(--glow-sm);
+}
+
+/* highlighter-noir: elegante Tiefe, präzise Akzent-Border */
+html[data-theme="highlighter-noir"] .card-selected {
+  background:
+    linear-gradient(180deg, rgba(var(--c-accent-rgb), .04) 0%, rgba(var(--c-accent-rgb), .01) 100%),
+    var(--c-surface) !important;
+  border-color: rgba(var(--c-accent-rgb), .38) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 10px 24px rgba(0,0,0,.22);
+}
+
+/* safety-lime: deutlicher Signalcharakter */
+html[data-theme="safety-lime"] .card-selected {
+  background:
+    linear-gradient(180deg, rgba(var(--c-accent-rgb), .08) 0%, rgba(var(--c-accent-rgb), .025) 100%),
+    var(--c-surface) !important;
+  border-color: rgba(var(--c-accent-rgb), .45) !important;
+  box-shadow: 0 0 0 1px rgba(var(--c-accent-rgb), .10), var(--shadow-card);
+}
+
+/* cleanroom-lime: präzise Datendarstellung, minimale Tönung */
+html[data-theme="cleanroom-lime"] .card-selected {
+  background:
+    linear-gradient(180deg, rgba(var(--c-accent-rgb), .05) 0%, rgba(var(--c-accent-rgb), .015) 100%),
+    var(--c-surface) !important;
+  border-color: rgba(var(--c-accent-rgb), .34) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.90),
+    var(--shadow-card);
 }
 
 
