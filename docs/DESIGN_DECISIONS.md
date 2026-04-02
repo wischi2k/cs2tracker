@@ -14,12 +14,12 @@ Komponenten greifen ausschließlich auf diese Variablen zu, nie auf Hardcoded-We
 
 **Begründung:**
 - Ein Theme-Wechsel erfordert kein JavaScript — nur das `data-theme`-Attribut auf `<html>` ändern.
-- Neue Themes lassen sich durch einen einzigen neuen CSS-Block hinzufügen, ohne bestehende Komponenten anzufassen.
-- Tailwind-Klassen, die nicht auf Custom Properties zugreifen können, werden per `!important`-Overrides
-  im Abschnitt "Tailwind-Überschreibungen" in `theme.css` gezähmt.
+- Neue Themes lassen sich durch einen einzigen neuen CSS-Block hinzufügen.
+- Tailwind-Klassen werden per `!important`-Overrides im Abschnitt „Tailwind-Überschreibungen"
+  in `theme.css` auf Custom Properties umgebogen.
 
-**Gespeicherter Wert:** Der aktive Theme-Key (`dark`, `midnight-jungle`, etc.) liegt in der App-Datenbank
-(Settings-Tabelle) und wird serverseitig als `{{ ui_theme }}` in `base.html` eingesetzt:
+**Gespeicherter Wert:** Der aktive Theme-Key liegt in der App-Datenbank (Settings-Tabelle)
+und wird serverseitig als `{{ ui_theme }}` in `base.html` eingesetzt:
 
 ```html
 <html lang="de" data-theme="{{ ui_theme }}">
@@ -27,217 +27,249 @@ Komponenten greifen ausschließlich auf diese Variablen zu, nie auf Hardcoded-We
 
 ---
 
+### Variablen-Architektur v2: Accent, Glow und Focus sind getrennt
+
+**Problem v1:** Die Akzentfarbe (`--c-accent`) übernahm zu viele Rollen gleichzeitig —
+Brand-Farbe, Fokusring, Glow, Hover, Selection. Das führte dazu, dass alle Themes trotz
+unterschiedlicher Flächen dieselbe Interaktionssprache hatten. Jede Aktion sah nach
+Neon-Grün aus, was auf Dauer ermüdend wirkt.
+
+**Lösung v2:**
+
+| Variable | Rolle | Beispiel |
+|----------|-------|---------|
+| `--c-accent` / `--c-accent-rgb` | Aktive Zustände, Navigation, kleine Marker | Selected-Bar, Toggle ON, Sidebar Active |
+| `--c-accent-2` / `--c-accent-2-rgb` | CTA-Buttons, sekundäre Aktionen | „Jetzt aktualisieren", „Speichern" |
+| `--c-focus` / `--c-focus-rgb` | Fokus-Ring bei Keyboard-Navigation | Input Focus, Tab-Ring |
+| `--c-glow-rgb` | Schatten, Halos, Spotlight-Gradient | `--glow-xs/sm/md`, Card-Hover, Spotlight |
+
+**Ergebnis:** Themes können jetzt ihren eigenen Leucht-Ton haben. Im Standard-Dark-Theme
+ist der Glow z.B. kühles Steel-Cyan statt Neon-Grün — ruhiger, erwachsener, trotzdem lebendig.
+
+---
+
 ## 2. Die vier Themes
 
 ### 2.1 Standard Dark (`dark`)
 
-Neutrales, zeitloses Dunkeldesign. Kein starker Farbstich — maximale Lesbarkeit als Default.
+**Charakter:** Neutral, ruhig, täglich nutzbar. Kein Gaming-Look.
 
-| Variable           | Wert        | Rolle                        |
-|--------------------|-------------|------------------------------|
-| `--c-bg`           | `#0b0f17`   | Fast schwarz, minimaler Blau-Stich |
-| `--c-surface`      | `#121821`   | Karten-Hintergrund           |
-| `--c-surface-2`    | `#1a2232`   | Hover-States, Inputs         |
-| `--c-accent`       | `#39FF14`   | Neon-Grün — primärer Akzent  |
-| `--c-btn-action`   | `#d97706`   | Amber für CTA-Buttons        |
-| `--c-text-muted`   | `#94a3b8`   | Slate-400 — Metadaten        |
+| Variable | Wert | Bedeutung |
+|----------|------|-----------|
+| `--c-bg` | `#0b0f17` | Fast schwarz, minimaler Blau-Stich |
+| `--c-surface` | `#121821` | Karten-Hintergrund |
+| `--c-surface-2` | `#1a2232` | Inputs, Hover-States |
+| `--c-accent` | `#39FF14` | Lime — bleibt als Brand-Signal |
+| `--c-accent-2` | `#d97706` | Amber — CTA |
+| `--c-glow-rgb` | `125,211,252` | **Steel-Cyan** — kein Neon-Grün als Glow mehr |
+| `--c-focus-rgb` | `125,211,252` | Steel-Cyan Fokus-Ring |
 
-**UX-Entscheidung:** Amber (`#d97706`) als Action-Button-Farbe schafft bewussten Kontrast
-zum Neon-Grün des Akzents und signalisiert "Achtung / Aktion".
-
----
-
-### 2.2 Midnight Jungle Glow (`midnight-jungle`)
-
-Mystisch, dunkel-grün, botanisch. Tiefe Grün-Sättigung als Alternative zum neutralen Dark.
-
-| Variable           | Wert        | Rolle                        |
-|--------------------|-------------|------------------------------|
-| `--c-bg`           | `#0E1B14`   | Sehr dunkles Waldgrün        |
-| `--c-surface`      | `#0B3D2E`   | Tiefes Smaragdgrün           |
-| `--c-surface-2`    | `#0d3326`   | Etwas dunkler als Surface    |
-| `--c-accent`       | `#39FF14`   | Neon-Grün (identisch zu dark)|
-| `--c-text-muted`   | `#1E6F5C`   | Gedämpftes Grün statt Grau   |
-| `--c-btn-action`   | `#1E6F5C`   | Grüner CTA (kein Amber)      |
-
-**UX-Entscheidung:** `--c-text-muted` ist hier kein Grau, sondern ein Dunkelgrün —
-die Neutraltöne bleiben im Farbcharakter des Themes. Das macht die UI homogener.
+**Wichtigste Änderung zu v1:** Glow-Effekte verwenden jetzt Steel-Cyan statt Neon-Grün.
+Das reduziert den „RGB-Gaming-Hardware-Look" erheblich, ohne die Brand-Farbe zu ändern.
 
 ---
 
-### 2.3 Arcade Glow Nights (`arcade-glow`)
+### 2.2 Highlighter Noir (`highlighter-noir`)
 
-Retro-Futuristisch, Neon-Lit. Lila-Tiefen, Cyan-Ränder, Hot-Pink CTA.
+**Charakter:** Sleek, modern, hochwertig. Premium-SaaS-UI-Charakter. Lime nur als scharfer Marker.
 
-| Variable           | Wert          | Rolle                          |
-|--------------------|---------------|--------------------------------|
-| `--c-bg`           | `#0A0A0A`     | Fast reines Schwarz            |
-| `--c-surface`      | `#1A0B2E`     | Dunkles Violett                |
-| `--c-surface-2`    | `#150924`     | Noch tieferes Violett          |
-| `--c-accent`       | `#39FF14`     | Neon-Grün                      |
-| `--c-text-muted`   | `#00E5FF`     | Cyan statt Grau                |
-| `--c-btn-action`   | `#FF2D55`     | Hot-Pink CTA                   |
-| `--c-border`       | `rgba(0,229,255,.12)` | Cyan-Rahmen statt weiß |
+| Variable | Wert | Bedeutung |
+|----------|------|-----------|
+| `--c-bg` | `#101215` | Fast schwarz, neutraler als dark |
+| `--c-surface` | `#171a1f` | Sehr dunkles Grau |
+| `--c-surface-2` | `#1f2328` | Dezent heller |
+| `--c-accent` | `#39FF14` | Lime — **nur** für aktive States |
+| `--c-accent-2` | `#2dd4bf` | Teal — CTA |
+| `--c-glow-rgb` | `45,212,191` | **Teal** — Halo folgt dem CTA-Ton |
+| `--c-focus-rgb` | `148,163,184` | Slate — sehr dezenter Fokus-Ring |
 
-**UX-Entscheidung:** Der Hot-Pink CTA (`#FF2D55`) ist der stärkste Akzent-Kontrast aller Themes —
-bewusst, weil das gesamte Theme visuell am lautesten ist.
+**Design-Entscheidung:** Lime wird bewusst sparsam eingesetzt — kein flächiger oder
+inflationärer Einsatz. Ränder, Divider und Hover-States bleiben kühles Grau.
+Kein Retro-Charakter, mehr Produkt-UI.
 
 ---
 
-### 2.4 Lime Punch Charcoal (`lime-punch`)
+### 2.3 Safety Lime (`safety-lime`)
 
-Urban, high-contrast, elektrisch. Anthrazit-Basis mit Gold als Button-Akzent.
+**Charakter:** Hell, bold, utilitarian. Erinnert an Wayfinding, Event-Signage, Baustellen-Ästhetik.
+Konsequenter Widerspruch zum Dark-Mode.
 
-| Variable           | Wert        | Rolle                          |
-|--------------------|-------------|--------------------------------|
-| `--c-bg`           | `#0B0F14`   | Dunkles Anthrazit              |
-| `--c-surface`      | `#2A2F36`   | Mittleres Anthrazit (hellster Surface-Wert aller Themes) |
-| `--c-surface-2`    | `#232830`   | Etwas dunkler                  |
-| `--c-accent`       | `#39FF14`   | Neon-Grün                      |
-| `--c-btn-action`   | `#FFB000`   | Gold/Amber CTA                 |
+| Variable | Wert | Bedeutung |
+|----------|------|-----------|
+| `--c-bg` | `#ffffff` | Reines Weiß |
+| `--c-surface` | `#f3f4f5` | Helles Concrete-Grau |
+| `--c-surface-2` | `#e7eaed` | Etwas dunkler |
+| `--c-text` | `#1f2328` | Fast schwarz |
+| `--c-accent` | `#2d9900` | **Sattes Lime-Grün** (dunkler als `#39FF14` — lesbar auf weiß) |
+| `--c-accent-2` | `#e6b800` | **Construction-Yellow** — CTA |
+| `--c-glow-rgb` | `101,163,13` | Soft-Lime für Halos |
 
-**UX-Entscheidung:** `--c-surface` ist mit `#2A2F36` das hellste unter allen vier Themes —
-die Karten heben sich dadurch stärker vom Hintergrund ab, was bei Anthrazit funktioniert
-(kein Farbstich der die Kontraste verwässert).
+**Wichtige Einschränkung:** Lime und Gelb dürfen nicht gleichzeitig überall eingesetzt werden.
+Beides sind sehr laute Farben — dosierter Einsatz verhindert, dass die UI wie eine
+Warnfarbenfläche wirkt.
+
+**Warum `#2d9900` statt `#39FF14`?** Neon-Lime (`#39FF14`) ist auf weißem Hintergrund
+fast unsichtbar — zu wenig Kontrast. `#2d9900` ist ein sattes, warmes Grün mit ausreichend
+Kontrast auf weißen und hellgrauen Flächen.
+
+---
+
+### 2.4 Cleanroom Lime (`cleanroom-lime`)
+
+**Charakter:** Präzise, minimal, datenzentriert. Maximal lange nutzbar, keine visuellen Ablenkungen.
+Besonders geeignet für Tabellen, Charts und Watchlists.
+
+| Variable | Wert | Bedeutung |
+|----------|------|-----------|
+| `--c-bg` | `#f8fafc` | Sehr helles Blau-Grau |
+| `--c-surface` | `#ffffff` | Reine weiße Karten |
+| `--c-surface-2` | `#eef2f6` | Helles Slate |
+| `--c-text` | `#0f172a` | Sehr dunkles Slate-Navy |
+| `--c-accent` | `#2d9900` | Lime — reiner Signalton |
+| `--c-accent-2` | `#2563eb` | **Blau** — ruhige CTA-Farbe |
+| `--c-glow-rgb` | `101,163,13` | Sehr sanfter Lime-Halo |
+
+**Design-Entscheidung:** Blau als CTA (`#2563eb`) ist bewusst gewählt — es schafft maximalen
+Kontrast zur Lime-Signalfarbe. Nicht jede Aktion muss Lime sein. Blau als „professionelle
+Aktionsfarbe" passt zum klinisch-präzisen Charakter des Themes.
 
 ---
 
 ## 3. Gemeinsame Design-Konstanten
 
-### Akzentfarbe: Neon-Grün `#39FF14` in allen Themes
+### Semantische Farben — theme-unabhängig hardcoded
 
-**Entscheidung:** Der Akzent ist in allen vier Themes identisch.
+| Klasse | Farbe | Bedeutung |
+|--------|-------|-----------|
+| `.glow-positive` | `#4ade80` | Gewinn / positiver Delta |
+| `.glow-negative` | `#f87171` | Verlust / negativer Delta |
 
-**Begründung:**
-- Schafft eine visuelle Klammer der gesamten App.
-- CS2 / Gaming-Kontext: Neon-Grün ist kulturell verankert (HUD-Farben, Night-Vision-Ästhetik).
-- Gewinn-Indikatoren (`glow-positive`) verwenden `#4ade80` (ein anderes Grün) — kein Konflikt
-  da die Sättigungen sich unterscheiden.
-
-### Gewinn / Verlust — Semantische Farben (theme-unabhängig)
-
-| Klasse           | Farbe     | Bedeutung         |
-|------------------|-----------|-------------------|
-| `.glow-positive` | `#4ade80` | Gewinn / positiv  |
-| `.glow-negative` | `#f87171` | Verlust / negativ |
-
-**Entscheidung:** Diese Farben sind **nicht** theme-variabel — sie sind semantisch
-(Rot = Verlust, Grün = Gewinn) und müssen theme-übergreifend konsistent bleiben.
+**Begründung:** Rot = Verlust, Grün = Gewinn ist eine universelle semantische Konvention.
+Diese Farben dürfen nicht theme-variabel sein — sie müssen in allen vier Themes gleich lesbar und
+gleich bedeutsam sein.
 
 ---
 
 ## 4. Glow-Effekte
 
-Alle Glow-Effekte basieren auf gestapelten `box-shadow`-Layern (freefrontend / Stripe-Technik).
-Mehrere Layer mit abnehmender Intensität erzeugen einen realistischen Lichtabfall.
+### Grundprinzip: Tiefe statt Leuchten
 
-### Glow-Stufen
+**v1-Problem:** Mehrfach gestapelte Neon-Glows führten zu visueller Ermüdung bei längerer Nutzung
+und zu einem generellen „Gaming-Hardware"-Look.
+
+**v2-Lösung:** Glow-Effekte sind reduziert und subtiler:
+- Kein mehrfach gestapelter Neon-Glow mehr
+- Stattdessen: 1px Halo-Ring (`0 0 0 1px rgba(...)`) + weicher Drop-Shadow
+- `--c-glow-rgb` ist theme-abhängig → jedes Theme hat seinen eigenen Leucht-Ton
 
 ```css
---glow-xs: 0 0 5px 1px  rgba(var(--c-accent-rgb),.18);
---glow-sm: 0 0 8px 2px  rgba(var(--c-accent-rgb),.22),
-           0 0 18px 4px rgba(var(--c-accent-rgb),.09);
---glow-md: 0 0 10px 2px rgba(var(--c-accent-rgb),.28),
-           0 0 22px 6px rgba(var(--c-accent-rgb),.14),
-           0 0 40px 10px rgba(var(--c-accent-rgb),.05);
+--glow-xs: 0 0 0 1px rgba(var(--c-glow-rgb), .18);
+--glow-sm: 0 0 0 1px rgba(var(--c-glow-rgb), .20), 0 6px 20px rgba(0,0,0,.12);
+--glow-md: 0 0 0 1px rgba(var(--c-glow-rgb), .24), 0 10px 30px rgba(0,0,0,.16), ...;
 ```
-
-| Stufe    | Einsatz                                          |
-|----------|--------------------------------------------------|
-| `glow-xs`| Buttons hover, Input-Fokus                       |
-| `glow-sm`| Karten-Hover, aktive Sidebar-Elemente, Swatches  |
-| `glow-md`| `.glow-accent` — stark hervorgehobene Elemente   |
 
 ### Spotlight-Effekt (Karten, `glow-card-inner`)
 
-**Technik:** Ein `::before`-Pseudo-Element mit `radial-gradient` folgt dem Mauszeiger.
-JS schreibt `--mouse-x` / `--mouse-y` via `mousemove`-Event auf jede Karte.
-Startwert `-9999px` hält den Gradient unsichtbar solange die Maus draußen ist.
-
-```css
-background: radial-gradient(
-  480px circle at var(--mouse-x, -9999px) var(--mouse-y, -9999px),
-  rgba(var(--c-accent-rgb), .09),
-  transparent 70%
-);
-```
-
-**Opazität 9%:** Bewusst niedrig gehalten — der Effekt soll subtil unterstützen,
-nicht den Karteninhalt überstrahlen.
+Bleibt bestehen, aber mit reduzierter Opazität (6% statt 9%) und nutzt `--c-glow-rgb`
+statt `--c-accent-rgb`. Der Effekt folgt dem Mauszeiger via `--mouse-x`/`--mouse-y` (JS).
 
 ---
 
 ## 5. Ausgewählte Karte (`card-selected`)
 
-**Technik:** Drei kombinierte Effekte.
+### Design-Änderung v1 → v2
 
-1. **Pulsierender `box-shadow`** (`selected-card-glow @keyframes`) — Glow am Rand, außerhalb der Karte.
-2. **Rotierender Conic-Gradient-Ring** (`card-border-spin @keyframes` + `::after`) — dreht sich
-   alle 3 Sekunden um die Karte.
-3. **`@property --card-border-angle`** — ermöglicht die CSS-Animation des conic-gradient.
+**v1 (verworfen):** Rotierender Conic-Gradient-Ring (`@property --card-border-angle` +
+`card-border-spin @keyframes`) + pulsierender Box-Shadow. Probleme:
+- `overflow: hidden` auf dem Karten-Element clippte den `::after`-Ring nach **innen**
+  statt nach außen → Karte leuchtete komplett neon-grün, Text war kaum lesbar.
+- Technisch komplex, visuell zu dominant.
 
-**Wichtige Implementierungs-Entscheidung:**
-`.card-selected` setzt `overflow: visible !important` — das ist notwendig, damit der `::after`-Ring
-**außerhalb** der Karte rendert. `.glow-card-inner` hat `overflow: hidden` (für den Spotlight-Clip).
-Ohne diesen Override würde der Conic-Gradient nach innen geclippt und den Karteninhalt überfluten
-(Neon-grüner Hintergrund → Text unleserlich).
+**v2 (aktuell):** Drei ruhigere Elemente:
+1. **Accent-Border:** `border-color: rgba(var(--c-accent-rgb), .40)` — subtile Rahmenlinie
+2. **Gradient-Tint:** Minimale Lime-Aufhellung der Kartenfläche (5% → 1,5% von oben nach unten)
+3. **Left-Bar:** 3px breiter vertikaler Balken am linken Rand in `var(--c-accent)`
 
-Als Ausgleich wird `::before` (Spotlight) via `clip-path: inset(0 round 12px)` auf die Kartenfläche
-begrenzt, da `overflow: hidden` für dieses Element nicht mehr greift.
+**Begründung:** Der Left-Bar-Marker ist theme-unabhängig wiedererkennbar, barrierereduziertert
+(nicht nur Farbe als Signal) und vermeidet die visuelle Dominanz eines Glow-Effekts.
 
 ---
 
-## 6. Neon Toggle Switch
+## 6. Fokus-System
 
-Ersetzt klassische Aktivieren/Deaktivieren-Buttons auf der Edit-Seite.
-Skeuomorphisch gestaltet: Track + Thumb mit physischem Glüh-Feedback.
+**v1:** Input-Fokus nutzte `--c-accent` (Lime) für Border und `--glow-xs` (Lime-Glow).
 
-**Entscheidung:** Kein JavaScript für den visuellen State — der Toggle-State wird
-als CSS-Klasse (`.neon-toggle--on` / `.neon-toggle--off`) serverseitig gerendert.
-Ein-/Ausschalten erfolgt weiterhin per Form-POST.
-
-**Begründung:** Konsistent mit dem "progressive enhancement"-Ansatz der App —
-JS fällt aus, Form-POSTs funktionieren trotzdem.
+**v2:** Separater `--c-focus-rgb`-Token:
+```css
+--focus-ring: 0 0 0 2px rgba(var(--c-focus-rgb), .30);
+```
+Inputs nutzen `--c-focus-rgb` für Border und `--focus-ring` für den Schatten.
+Im Standard-Dark-Theme ist das Steel-Cyan — deutlich dezenter als Neon-Lime-Fokus.
 
 ---
 
 ## 7. Tailwind-Override-Strategie
 
-Tailwind-Klassen die direkt in Templates stehen (z.B. `bg-slate-800`) werden in `theme.css`
-per `!important`-Regel auf Theme-Variablen umgebogen:
+Tailwind CDN generiert Klassen dynamisch. Wichtige Fallstricke:
 
+**Opacity-Modifier** (`bg-slate-800/60`) erzeugen eigene CSS-Klassenamen:
 ```css
-html[data-theme] .bg-slate-800         { background-color: var(--c-surface-2) !important; }
-html[data-theme] .hover\:bg-slate-800:hover { background-color: var(--c-surface-2) !important; }
-html[data-theme] .bg-slate-800\/60      { background-color: rgba(var(--c-surface-2-rgb), .60) !important; }
+html[data-theme] .bg-slate-800\/60 { background: rgba(var(--c-surface-2-rgb), .60) !important; }
 ```
 
-**Bekannte Fallstricke:**
-- Tailwind mit Opacity-Modifier (`/60`) erzeugt einen **eigenen Klassenamen** (`.bg-slate-800\/60`),
-  der separat überschrieben werden muss.
-- Tailwind hover-Varianten (`hover:bg-slate-800`) erzeugen ebenfalls einen eigenen Klassenamen
-  (`.hover\:bg-slate-800`) — auch dieser braucht eine eigene Override-Regel.
-- Deshalb existiert `--c-surface-2-rgb` als RGB-Tripel-Variable (neben `--c-surface-2` als Hex),
-  um `rgba(...)` Compositing zu ermöglichen.
+**Hover-Varianten** (`hover:bg-slate-800`) erzeugen ebenfalls eigene Klassenamen:
+```css
+html[data-theme] .hover\:bg-slate-800:hover { background: var(--c-surface-2) !important; }
+```
+
+**Light-Theme-Kompatibilität:** Alle Text-Overrides (`text-slate-300/400`) und
+Hintergrund-Overrides (`bg-slate-900/800/700`) nutzen CSS-Variablen, die in Light-Themes
+auf helle Werte gesetzt sind. Dadurch funktionieren dieselben Override-Regeln in allen Themes.
+
+**Vollständig überschriebene Klassen:** `bg-slate-900/800/700/600/500/400` inklusive
+Opacity-Varianten, `hover:bg-slate-*`, `text-slate-100/200/300/400/500`, `text-gray-300/400`,
+`border-slate-700/600`.
+
+**Zusatzvariable `--c-interactive`/`--c-interactive-hi`:** Für `bg-slate-700`/`bg-slate-600`
+(interaktive Elemente wie Edit-Buttons, Iconplatzhalter). In Dark-Themes dunkles Blau-Grau,
+in Light-Themes mittleres Concrete-Grau.
 
 ---
 
 ## 8. Theme-Swatch UX (Settings-Seite)
 
-**Problem:** Die `selected`-CSS-Klasse auf dem Swatch-Label wird serverseitig gesetzt —
-nach einem Klick auf einen anderen Swatch passiert visuell nichts bis die Form gespeichert
-und die Seite neu geladen wurde.
+Die Swatch-Dots zeigen nicht nur `--c-bg` und `--c-surface`, sondern ab v2 den
+**Glow-/CTA-Ton** des Themes als dritten Dot. Das gibt auf der Settings-Seite eine
+ehrlichere Vorschau des visuellen Charakters, bevor das Theme gespeichert wird.
 
-**Lösung:** Kleines Inline-JS in `settings.html` toggelt die `selected`-Klasse sofort
-beim `change`-Event des Radio-Buttons — keine Seiten-Reload nötig für das visuelle Feedback.
+Sofortiges visuelles Feedback beim Klick: Kleines Inline-JS in `settings.html`
+toggelt die `selected`-Klasse direkt beim Radio-`change`-Event.
 
 ---
 
-## 9. Bekannte Design-Kompromisse
+## 9. Chart-Tokens
+
+Charts und Datenvisualisierungen nutzen eigene Token statt UI-Akzentfarben:
+
+```css
+--chart-1: var(--c-accent);   /* erste Datenserie */
+--chart-2: #60a5fa;           /* zweite Datenserie — Blau */
+--chart-3: #f59e0b;           /* dritte Datenserie — Amber */
+--chart-4: #f472b6;           /* vierte Datenserie — Pink */
+--chart-grid: rgba(148,163,184,.15);
+```
+
+Diese Token sind in `:root` definiert und theme-unabhängig (außer `--chart-1`),
+damit Datenpunkte in verschiedenen Themes immer dieselbe Bedeutung haben.
+
+---
+
+## 10. Bekannte Design-Kompromisse
 
 | Thema | Kompromiss | Begründung |
 |-------|------------|------------|
-| Tailwind CDN | Alle Utility-Klassen werden client-seitig generiert, kein Build-Step | Vereinfacht das Deployment auf dem NUC erheblich |
+| Tailwind CDN | Alle Klassen client-seitig generiert, kein Build-Step | Vereinfacht Deployment auf NUC erheblich |
 | `!important` Overrides | Viele Theme-Overrides brauchen `!important` | Unvermeidlich wenn Tailwind-Klassen direkt in Templates stehen |
-| Keine Dark/Light-Toggle | Nur Dark-Themes | CS2-Kontext; helle Themes wurden nicht benötigt |
-| Semantische Farben hardcoded | `glow-positive`/`glow-negative` nicht theme-variabel | Semantik muss theme-übergreifend stabil bleiben |
+| Neon-Lime für Light-Themes | `#39FF14` wäre auf weißem BG kaum sichtbar → `#2d9900` | Kontrastverhältnis auf weiß/hellgrau benötigt satteres Grün |
+| Semantische Farben hardcoded | `glow-positive/negative` nicht theme-variabel | Semantik muss theme-übergreifend stabil bleiben |
+| Neon-Toggle nutzt noch `--c-accent` direkt | Toggle-Zustand als Status-Indikator bleibt Lime | Deliberate: Toggle zeigt AN/AUS — Lime als globales „an"-Signal ist konsistent |

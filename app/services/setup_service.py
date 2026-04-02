@@ -8,7 +8,7 @@ from flask import Request
 from app.repositories.config_repository import ConfigRepository
 
 
-VALID_THEMES = {"dark", "midnight-jungle", "arcade-glow", "lime-punch"}
+VALID_THEMES = {"dark", "highlighter-noir", "safety-lime", "cleanroom-lime"}
 
 
 class SetupService:
