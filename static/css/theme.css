@@ -40,8 +40,8 @@ html[data-theme="dark"] {
   --c-surface-2-rgb:   26,34,50;
   --c-interactive-rgb: 36,48,68;
 
-  --c-border:          rgba(148,163,184,.10);
-  --c-border-hi:       rgba(148,163,184,.18);
+  --c-border:          rgba(255,255,255,.06);   /* Original: sehr dezent, kaum sichtbar */
+  --c-border-hi:       rgba(255,255,255,.14);   /* Original: leichtes Aufleuchten hover/active */
 
   --c-text:            #f8fafc;
   --c-text-2:          #cbd5e1;
