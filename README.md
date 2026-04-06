@@ -6,25 +6,27 @@ Portfolio-Tracker für CS2 (Counter-Strike 2) Market-Items. Preise werden automa
 
 - **Item-Verwaltung** — Items per Steam-Market-URL hinzufügen, Kaufpreis hinterlegen, Kategorie setzen
 - **Automatische Preisupdates** — interner Scheduler mit konfigurierbarem Intervall (5–1440 Min.)
-- **Preishistorie & Chart** — Verlauf pro Item als Zeitreihe
-- **Gewinn/Verlust-Anzeige** — Brutto und Netto (Steam-Gebühr 15 %) mit farbigem Glow
+- **Preishistorie & Chart** — Verlauf pro Item als Zeitreihe (Chart.js)
+- **Portfolio-Übersicht** — KPI-Streifen mit Gesamtwert (Brutto/Netto) und Gesamt-Δ auf dem Dashboard
+- **Gewinn/Verlust-Anzeige** — Brutto und Netto (Steam-Gebühr 15 %) mit farbigem Glow; Δ Netto als Hauptsignal in Item-Cards und Detail-Panel
+- **Detail-Panel mit KPI-Cards** — Kennzahlen (Kaufpreis, Brutto, Netto, Δ Netto) übersichtlich als einzelne Kacheln
 - **Preisalarme** — Telegram-Benachrichtigung ab einem konfigurierbaren Netto-Schwellwert
 - **Telegram-Zusammenfassung** — periodischer Report mit Top-Gewinnern, Verlierern und wertvollsten Items
-- **Theme-System** — 4 wählbare Farbthemes inkl. Neon-Glow-Effekten
+- **Theme-System** — 4 wählbare Farbthemes (2 Dark, 2 Light) inkl. Neon-Glow-Effekten und Cursor-Spotlight
 - **Browserbasiertes Setup** — kein manuelles Editieren von Dateien nötig
 
 ## Themes
 
 Wählbar unter `/settings` → Allgemein:
 
-| Theme | Stimmung |
-|---|---|
-| Standard Dark | Klassisches Dunkel |
-| Midnight Jungle Glow | Mystisch, botanisch, neon |
-| Arcade Glow Nights | Retro-futuristisch, neon-lit |
-| Lime Punch Charcoal | Urban, high-contrast, elektrisch |
+| Theme | Modus | Stimmung |
+|---|---|---|
+| Standard Dark | Dark | Neutral, ruhig, täglich nutzbar |
+| Highlighter Noir | Dark | Sleek, modern, hochwertig |
+| Safety Lime | Light | Hell, bold, Wayfinding-Charakter |
+| Cleanroom Lime | Light | Präzise, minimal, datenzentriert |
 
-Alle Themes nutzen CSS Custom Properties (`data-theme` auf `<html>`). Glow-Effekte basieren auf gestapelten `box-shadow`/`text-shadow`-Werten und einem Cursor-folgenden `radial-gradient`-Spotlight pro Karte.
+Alle Themes nutzen CSS Custom Properties (`data-theme` auf `<html>`). Glow-Effekte basieren auf gestapelten `box-shadow`/`text-shadow`-Werten und einem Cursor-folgenden `radial-gradient`-Spotlight pro Karte. Buttons, Inputs und Navigation passen sich automatisch per Design-System-Klassen (`.btn`, `.input`, `.nav-link`) an das aktive Theme an.
 
 ## Schnellstart
 
