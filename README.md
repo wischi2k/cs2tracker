@@ -120,6 +120,7 @@ docs/
 
 ## Dokumentation
 
+- **Einsteiger-Installation (Windows/macOS):** `docs/INSTALLATION.md`
 - Architektur & Schichten: `docs/ARCHITECTURE.md`
 - Designentscheidungen: `docs/DECISIONS.md`
 - Betrieb & systemd: `docs/OPERATIONS.md`
