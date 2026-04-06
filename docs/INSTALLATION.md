@@ -1,12 +1,12 @@
 # CS2 Tracker — Installationsanleitung für Einsteiger
 
-Diese Anleitung erklärt Schritt für Schritt, wie du CS2 Tracker auf deinem eigenen Computer (Windows oder macOS) zum Laufen bringst. Keine Vorkenntnisse nötig.
+Diese Anleitung erklärt Schritt für Schritt, wie du CS2 Tracker auf deinem eigenen Computer zum Laufen bringst. Keine Vorkenntnisse nötig.
 
 ---
 
 ## Was du brauchst
 
-- Einen Computer mit **Windows 10/11** oder **macOS**
+- Einen Computer mit **Windows 10/11**, **macOS** oder **Linux** (Ubuntu/Debian)
 - Eine aktive Internetverbindung
 - Ca. 15 Minuten Zeit
 
@@ -36,6 +36,23 @@ CS2 Tracker läuft mit Python. Prüfe zuerst, ob Python bereits installiert ist.
    ```
 3. Wenn Python fehlt, öffnet macOS automatisch einen Dialog zur Installation — dem folgen
 
+### Linux (Ubuntu / Debian)
+
+Python 3 ist auf den meisten Linux-Systemen bereits vorinstalliert. Prüfen und ggf. installieren:
+
+```bash
+python3 --version
+```
+
+Falls die Version fehlt oder zu alt ist (unter 3.10):
+
+```bash
+sudo apt update
+sudo apt install python3 python3-pip python3-venv
+```
+
+> **Hinweis `python3-venv`:** Auf Ubuntu/Debian ist das venv-Modul manchmal nicht im Python-Paket enthalten. Falls Schritt 4 mit einem Fehler abbricht, einfach `sudo apt install python3-venv` ausführen.
+
 ---
 
 ## Schritt 2 — Code herunterladen
@@ -46,12 +63,13 @@ CS2 Tracker läuft mit Python. Prüfe zuerst, ob Python bereits installiert ist.
 2. Klicke auf den grünen Button **„Code"** → **„Download ZIP"**
 3. Entpacke die ZIP-Datei an einen Ort deiner Wahl, z. B.:
    - Windows: `C:\cs2tracker\`
-   - macOS: `/Users/deinname/cs2tracker/`
+   - macOS/Linux: `~/cs2tracker/`
 
 ### Option B: Mit Git (für regelmäßige Updates empfohlen)
 
-Falls du Git installiert hast:
-```
+Falls Git installiert ist (Linux: `sudo apt install git`):
+
+```bash
 git clone https://github.com/wischi2k/cs2tracker.git
 ```
 
@@ -73,8 +91,16 @@ cd C:\cs2tracker\cs2tracker-main
 
 ### macOS
 
+```bash
+cd ~/cs2tracker/cs2tracker-main
 ```
-cd /Users/deinname/cs2tracker/cs2tracker-main
+
+### Linux
+
+Terminal öffnen: `Strg + Alt + T` (Ubuntu/Debian mit Desktop) oder direkt aus dem Dateimanager heraus.
+
+```bash
+cd ~/cs2tracker/cs2tracker-main
 ```
 
 ---
@@ -87,7 +113,7 @@ Eine „virtuelle Umgebung" ist ein isolierter Bereich für die Abhängigkeiten 
 # Windows
 python -m venv .venv
 
-# macOS
+# macOS / Linux
 python3 -m venv .venv
 ```
 
@@ -100,16 +126,22 @@ Danach die Umgebung aktivieren:
 # Windows (PowerShell)
 .venv\Scripts\Activate.ps1
 
-# macOS
+# macOS / Linux
 source .venv/bin/activate
 ```
 
 Du erkennst, dass es geklappt hat, wenn am Anfang der Zeile `(.venv)` steht.
 
-> **PowerShell-Fehler?** Falls Windows meldet „Ausführen von Skripts wurde deaktiviert", einmalig ausführen:
+> **PowerShell-Fehler (Windows)?** Falls Windows meldet „Ausführen von Skripts wurde deaktiviert", einmalig ausführen:
 > ```
 > Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 > ```
+
+> **Linux-Fehler `ensurepip`?** Falls die Fehlermeldung `Error: package 'python3-venv' not found` erscheint:
+> ```bash
+> sudo apt install python3-venv
+> ```
+> Dann Schritt 4 erneut ausführen.
 
 ---
 
@@ -121,6 +153,8 @@ pip install -r requirements.txt
 
 Das lädt alle benötigten Bibliotheken herunter. Das kann 1–2 Minuten dauern.
 
+> **Linux-Hinweis:** Falls `pip` nicht gefunden wird, `pip3` verwenden oder sicherstellen, dass die virtuelle Umgebung aktiv ist (`.venv` muss am Anfang der Zeile stehen).
+
 ---
 
 ## Schritt 6 — App starten
@@ -129,7 +163,7 @@ Das lädt alle benötigten Bibliotheken herunter. Das kann 1–2 Minuten dauern.
 # Windows
 python run.py
 
-# macOS
+# macOS / Linux
 python3 run.py
 ```
 
@@ -181,7 +215,7 @@ Wenn alles klappt, siehst du etwas wie:
 
 **Neu starten:** Schritte 3 → 4 (Umgebung aktivieren) → Schritt 6 wiederholen
 
-> Tipp: Lege dir eine Batch-Datei an (Windows) oder ein Shell-Skript (macOS), das alle Schritte auf einmal ausführt — siehe unten.
+> Tipp: Lege dir eine Schnellstart-Datei an, die alle Schritte auf einmal ausführt — siehe unten.
 
 ### Windows — Schnellstart-Datei erstellen
 
@@ -197,7 +231,7 @@ pause
 
 Doppelklick auf `start.bat` → App startet.
 
-### macOS — Schnellstart-Skript erstellen
+### macOS / Linux — Schnellstart-Skript erstellen
 
 Erstelle eine Datei `start.sh` im Projektordner:
 
@@ -213,7 +247,7 @@ Einmalig ausführbar machen:
 chmod +x start.sh
 ```
 
-Dann einfach per Doppelklick starten (oder `./start.sh` im Terminal).
+Danach mit `./start.sh` starten. Auf macOS auch per Doppelklick möglich (Rechtsklick → Öffnen mit → Terminal).
 
 ---
 
@@ -222,7 +256,7 @@ Dann einfach per Doppelklick starten (oder `./start.sh` im Terminal).
 ### „python" wird nicht erkannt / `python` ist nicht vorhanden
 
 - **Windows:** Python wurde ohne „Add to PATH" installiert → Python deinstallieren und neu installieren, diesmal Haken setzen
-- **macOS:** `python3` statt `python` verwenden
+- **macOS / Linux:** `python3` statt `python` verwenden
 
 ---
 
@@ -234,11 +268,21 @@ Ein anderes Programm nutzt Port 5000. Entweder:
 
 ---
 
-### `.venv\Scripts\Activate.ps1` kann nicht ausgeführt werden (PowerShell)
+### `.venv\Scripts\Activate.ps1` kann nicht ausgeführt werden (Windows PowerShell)
 
 ```
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
+
+---
+
+### `python3-venv` fehlt (Linux)
+
+```bash
+sudo apt install python3-venv
+```
+
+Danach die virtuelle Umgebung neu erstellen (Schritt 4).
 
 ---
 
@@ -248,7 +292,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 # Windows
 python -m ensurepip --upgrade
 
-# macOS
+# macOS / Linux
 python3 -m ensurepip --upgrade
 ```
 
@@ -262,7 +306,7 @@ Steam hat gelegentlich Rate-Limits. Warte ein paar Minuten und klicke auf **„P
 
 ## Optionale Konfiguration via `.env`
 
-Für fortgeschrittene Einstellungen kannst du im Projektordner eine Datei namens `.env` anlegen (Vorlage: `.env.example`):
+Für erweiterte Einstellungen kannst du im Projektordner eine Datei namens `.env` anlegen (Vorlage: `.env.example`):
 
 ```env
 FLASK_HOST=0.0.0.0      # 0.0.0.0 = im Heimnetz erreichbar; 127.0.0.1 = nur dieser PC
@@ -272,16 +316,17 @@ CS2_DB_PATH=cs2_prices.sqlite
 CS2_SECRET_KEY=ein-langes-zufaelliges-passwort
 ```
 
-> **CS2_SECRET_KEY:** Irgendeine lange zufällige Zeichenkette (z. B. `meinGeheimesPasswort1234`). Wird zur Verschlüsselung von Telegram-Zugangsdaten genutzt. Wichtig: nach dem ersten Start nicht mehr ändern, sonst werden gespeicherte Secrets unleserlich.
+> **CS2_SECRET_KEY:** Eine beliebige lange Zeichenkette (z. B. `meinGeheimesPasswort1234`). Wird zur Verschlüsselung von Telegram-Zugangsdaten genutzt. Nach dem ersten Start nicht mehr ändern, sonst werden gespeicherte Secrets unleserlich.
 
 ---
 
 ## App dauerhaft laufen lassen (ohne Terminal offen halten)
 
-Wenn du die App dauerhaft im Hintergrund laufen lassen möchtest, schau in die weiterführenden Docs:
+Wenn du die App dauerhaft im Hintergrund laufen lassen möchtest:
 
-- **Linux/Heimserver:** `docs/OPERATIONS.md` → Abschnitt „Betrieb mit systemd"
+- **Linux (Ubuntu/Debian, Heimserver):** `docs/OPERATIONS.md` → Abschnitt „Betrieb mit systemd"
 - **Intel NUC + Proxmox:** `docs/DEPLOY_INTEL_NUC_PROXMOX.md`
+- **Windows:** Task-Scheduler oder die `start.bat` beim Windows-Start ausführen lassen
 
 ---
 
