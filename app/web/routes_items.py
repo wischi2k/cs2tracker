@@ -15,6 +15,18 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
         kwargs = {"cat": cat} if cat else {}
         return redirect(url_for("index", **kwargs))
 
+    def _portfolio_summary(items):
+        active = [it for it in items if it.get("active", True)]
+        total_cur = sum(it["cur"] for it in active if it.get("cur") is not None)
+        total_net = sum(it["net"] for it in active if it.get("net") is not None)
+        total_diff_n = sum(it["diff_n"] for it in active if it.get("diff_n") is not None)
+        return {
+            "count": len(active),
+            "total_cur": total_cur,
+            "total_net": total_net,
+            "total_diff_n": total_diff_n,
+        }
+
     def index():
         sel_cat = request.args.get("cat", "Alle")
         items, cats = service.list_items(sel_cat)
@@ -23,6 +35,7 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
             categories=cats,
             items=items,
             selected=None,
+            portfolio=_portfolio_summary(items),
             now_ts=int(time.time()),
         )
 
@@ -41,6 +54,7 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
             categories=cats,
             items=items,
             selected={"it": selected_item, "chart": chart, "alert_th": alert_th},
+            portfolio=_portfolio_summary(items),
             now_ts=int(time.time()),
         )
 

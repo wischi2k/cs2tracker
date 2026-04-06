@@ -28,25 +28,30 @@
         {% endif %}
 
         {# Textblock #}
-        <div class="min-w-0">
-          <div class="truncate text-sm font-medium">{{ it.name }}</div>
-          <div class="mt-0.5 text-[11px] text-slate-400">
-            {% if it.buy is not none %}Kauf: {{ '%.2f'|format(it.buy) }} €{% else %}Kauf: —{% endif %}
-            · Jetzt: {{ it.cur is not none and '%.2f'|format(it.cur) ~ ' €' or '—' }}
-            · Netto: {{ it.net is not none and '%.2f'|format(it.net) ~ ' €' or '—' }}
+        <div class="min-w-0 flex-1">
+          {# Zeile 1: Name #}
+          <div class="truncate text-sm font-semibold">{{ it.name }}</div>
+
+          {# Zeile 2: Nettowert prominent #}
+          <div class="mt-0.5 text-sm font-medium">
+            {{ it.net is not none and '%.2f'|format(it.net) ~ ' €' or '—' }}
+            <span class="text-xs text-slate-400 font-normal">netto</span>
           </div>
 
-          <div class="mt-0.5 text-[11px]">
-            {% if it.diff_g is not none %}
-              <span class="{{ 'glow-positive' if it.diff_g >= 0 else 'glow-negative' }}">
-                Δ brutto: {{ it.diff_g >= 0 and '+' or '' }}{{ '%.2f'|format(it.diff_g) }} €
-              </span>
-              <span class="text-slate-500"> · </span>
-            {% endif %}
+          {# Zeile 3: Kaufpreis sekundär #}
+          <div class="mt-0.5 text-xs text-slate-400">
+            Kauf: {% if it.buy is not none %}{{ '%.2f'|format(it.buy) }} €{% else %}—{% endif %}
+          </div>
+
+          {# Zeile 4: Delta — Netto dominant, Brutto in muted #}
+          <div class="mt-1 flex items-center gap-1.5 text-xs">
             {% if it.diff_n is not none %}
-              <span class="{{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
-                Δ netto: {{ it.diff_n >= 0 and '+' or '' }}{{ '%.2f'|format(it.diff_n) }} €
+              <span class="font-semibold {{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
+                {{ '+' if it.diff_n >= 0 else '' }}{{ '%.2f'|format(it.diff_n) }} €
               </span>
+            {% endif %}
+            {% if it.diff_g is not none %}
+              <span class="text-slate-500">(brutto: {{ '+' if it.diff_g >= 0 else '' }}{{ '%.2f'|format(it.diff_g) }} €)</span>
             {% endif %}
           </div>
         </div>

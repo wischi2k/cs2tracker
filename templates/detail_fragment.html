@@ -1,5 +1,7 @@
 <!-- templates/detail_fragment.html -->
 <div class="space-y-4">
+
+  {# Header: Icon + Name #}
   <div class="flex items-center gap-4">
     {% if it.icon %}
       {% set sep = '&' if '?' in it.icon else '?' %}
@@ -7,27 +9,38 @@
     {% endif %}
     <div>
       <div class="text-lg font-semibold">{{ it.name }}</div>
-      <div class="text-sm text-slate-300 mt-1">
-        Kauf: <b>{{ '%.2f'|format(it.buy) if it.buy is not none else '-' }} EUR</b> &middot;
-        Brutto: <b>{{ '%.2f'|format(it.cur) if it.cur is not none else '-' }} EUR</b> &middot;
-        Netto (15 %): <b>{{ '%.2f'|format(it.net) if it.net is not none else '-' }} EUR</b> &middot;
-        Delta brutto:
-        {% if it.diff_g is not none %}
-          <b class="{{ 'text-green-400' if it.diff_g >= 0 else 'text-red-500' }}">
-            {{ ('+' if it.diff_g >= 0 else '') + '%.2f'|format(it.diff_g) }} EUR
-          </b>
-        {% else %}<b>-</b>{% endif %}
-        &middot; Delta netto:
+      <div class="text-xs text-slate-400 mt-0.5">Steam Market &middot; CS2</div>
+    </div>
+  </div>
+
+  {# KPI-Cards: 4er-Grid #}
+  <div class="flex gap-3 flex-wrap">
+    <div class="kpi-card">
+      <div class="kpi-label">Kaufpreis</div>
+      <div class="kpi-value">{{ '%.2f'|format(it.buy) if it.buy is not none else '—' }} €</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Brutto</div>
+      <div class="kpi-value">{{ '%.2f'|format(it.cur) if it.cur is not none else '—' }} €</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Netto (15 %)</div>
+      <div class="kpi-value">{{ '%.2f'|format(it.net) if it.net is not none else '—' }} €</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Δ Netto</div>
+      <div class="kpi-value">
         {% if it.diff_n is not none %}
-          <b class="{{ 'text-green-400' if it.diff_n >= 0 else 'text-red-500' }}">
-            {{ ('+' if it.diff_n >= 0 else '') + '%.2f'|format(it.diff_n) }} EUR
-          </b>
-        {% else %}<b>-</b>{% endif %}
+          <span class="{{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
+            {{ '+' if it.diff_n >= 0 else '' }}{{ '%.2f'|format(it.diff_n) }} €
+          </span>
+        {% else %}—{% endif %}
       </div>
     </div>
   </div>
 
-  <div class="chart-wrap bg-slate-800/60 rounded-xl border border-slate-700/50 p-3">
+  {# Chart #}
+  <div class="chart-wrap p-3">
     <div class="relative h-72">
       <canvas id="priceChart"></canvas>
     </div>
@@ -36,16 +49,17 @@
     </div>
   </div>
 
+  {# Aktionen #}
   <div class="flex flex-wrap items-center gap-3">
     <form method="post" action="{{ url_for('set_alert', item_id=it.id) }}" class="flex items-center gap-2">
-      <label class="text-sm text-slate-300">Netto-Alarm, wenn &gt;=</label>
-      <input name="threshold" class="bg-slate-800 rounded px-2 py-1 text-sm w-24"
+      <label class="text-sm text-slate-300">Netto-Alarm &ge;</label>
+      <input name="threshold" class="input w-24 text-sm"
              value="{{ alert_th if alert_th is not none else '' }}" placeholder="z.B. 7.00">
-      <button class="px-3 py-1.5 rounded bg-slate-700 hover:bg-slate-600 text-sm">Speichern</button>
+      <button class="btn btn-slate btn-sm">Speichern</button>
     </form>
 
     <form method="post" action="{{ url_for('refresh_item', item_id=it.id, cat=request.args.get('cat')) }}">
-      <button class="px-3 py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-sm">Preis jetzt aktualisieren</button>
+      <button class="btn btn-amber btn-sm">Preis aktualisieren</button>
     </form>
   </div>
 </div>
