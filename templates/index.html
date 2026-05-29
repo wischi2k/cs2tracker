@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Filterzeile -->
+<div class="mb-3 flex items-center gap-2">
+  <form method="get" class="flex items-center gap-2">
+    <select name="cat" class="bg-slate-800 rounded px-2 py-1 text-sm">
+      {% for c in categories %}
+        <option value="{{ c }}" {{ 'selected' if c==request.args.get('cat','Alle') else '' }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <button class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-sm">Anwenden</button>
+  </form>
+</div>
+
+<div class="grid grid-cols-[320px,1fr] gap-4">
+  <!-- Sidebar -->
+  <aside class="space-y-3">
+    {% set sel_cat = request.args.get('cat','Alle') %}
+
+    <!-- Inventar -->
+    <div class="flex items-center gap-2 mt-1">
+      <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Inventar</span>
+      <span class="text-xs text-slate-500">({{ inventory_items|length }})</span>
+    </div>
+    {% for it in inventory_items %}
+      {% include '_item_card.html' %}
+    {% endfor %}
+    {% if not inventory_items %}
+      <div class="text-xs text-slate-500 italic">Keine Inventar-Items.</div>
+    {% endif %}
+
+    <!-- Tracking -->
+    <div class="flex items-center gap-2 mt-4">
+      <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Tracking</span>
+      <span class="text-xs text-slate-500">({{ tracking_items|length }})</span>
+    </div>
+    {% for it in tracking_items %}
+      {% include '_item_card.html' %}
+    {% endfor %}
+    {% if not tracking_items %}
+      <div class="text-xs text-slate-500 italic">Keine Tracking-Items.</div>
+    {% endif %}
+
+    <a href="{{ url_for('add') }}" class="block text-center bg-amber-600 hover:bg-amber-500 rounded-xl py-2 mt-2">
+      + Hinzufügen
+    </a>
+  </aside>
+
+  <!-- Main -->
+  <main>
+    {% if selected %}
+      {% set it = selected.it %}
+      {% set chart = selected.chart %}
+      {% set alert_th = selected.alert_th %}
+      {% set alert_above = selected.alert_above %}
+      {% include 'detail_fragment.html' %}
+    {% else %}
+      <div class="text-slate-400">Wähle links einen Skin oder füge einen neuen hinzu.</div>
+    {% endif %}
+  </main>
+</div>
+
+{% endblock %}

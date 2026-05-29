@@ -1,0 +1,110 @@
+<!-- templates/detail_fragment.html -->
+<div class="space-y-4">
+  <div class="flex items-center gap-4">
+    {% if it.icon %}
+      {% set sep = '&' if '?' in it.icon else '?' %}
+      <img src="{{ it.icon }}{{ sep }}v={{ it.icon_updated_at or 0 }}" class="item-hero" alt="">
+    {% endif %}
+    <div>
+      <div class="text-lg font-semibold">{{ it.name }}</div>
+      {% if it.item_type == 'tracking' %}
+        <div class="text-sm text-slate-300 mt-1">
+          Aktueller Preis: <b>{{ '%.2f'|format(it.cur) if it.cur is not none else '-' }} EUR</b>
+          {% if alert_th is not none %}
+            &nbsp;·&nbsp; Zielpreis: <b class="text-amber-400">{{ '%.2f'|format(alert_th) }} EUR</b>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="text-sm text-slate-300 mt-1">
+          Kauf: <b>{{ '%.2f'|format(it.buy) if it.buy is not none else '-' }} EUR</b> ·
+          Brutto: <b>{{ '%.2f'|format(it.cur) if it.cur is not none else '-' }} EUR</b> ·
+          Netto (15 %): <b>{{ '%.2f'|format(it.net) if it.net is not none else '-' }} EUR</b> ·
+          Delta brutto:
+          {% if it.diff_g is not none %}
+            <b class="{{ 'text-green-400' if it.diff_g >= 0 else 'text-red-500' }}">
+              {{ ('+' if it.diff_g >= 0 else '') + '%.2f'|format(it.diff_g) }} EUR
+            </b>
+          {% else %}<b>-</b>{% endif %}
+          · Delta netto:
+          {% if it.diff_n is not none %}
+            <b class="{{ 'text-green-400' if it.diff_n >= 0 else 'text-red-500' }}">
+              {{ ('+' if it.diff_n >= 0 else '') + '%.2f'|format(it.diff_n) }} EUR
+            </b>
+          {% else %}<b>-</b>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-slate-800/60 rounded-xl border border-slate-700/50 p-3">
+    <div class="relative h-72">
+      <canvas id="priceChart"></canvas>
+    </div>
+    <div class="mt-2 text-xs text-slate-400">
+      Datenpunkte: {{ chart.ts|length }}{% if chart.ts|length < 2 %} (Trendlinie entsteht ab 2 Punkten){% endif %}
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-start gap-3">
+    <!-- Alert-Formular -->
+    <form method="post" action="{{ url_for('set_alert', item_id=it.id) }}" class="space-y-2">
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-slate-300">Preis-Alarm</label>
+        <input name="threshold" class="bg-slate-800 rounded px-2 py-1 text-sm w-24"
+               value="{{ alert_th if alert_th is not none else '' }}" placeholder="z.B. 7.00">
+        <button class="px-3 py-1.5 rounded bg-slate-700 hover:bg-slate-600 text-sm">Speichern</button>
+      </div>
+      <div class="flex gap-4 text-sm">
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="radio" name="above_threshold" value="0"
+                 {{ 'checked' if not alert_above else '' }}
+                 class="accent-amber-500" />
+          <span class="text-slate-300">≤ Unterschreitung <span class="text-slate-500">(Tracking-Standard)</span></span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="radio" name="above_threshold" value="1"
+                 {{ 'checked' if alert_above else '' }}
+                 class="accent-amber-500" />
+          <span class="text-slate-300">≥ Überschreitung <span class="text-slate-500">(Inventar-Standard)</span></span>
+        </label>
+      </div>
+      {% if it.item_type == 'tracking' %}
+        <div class="text-xs text-slate-500">Schwellenwert bezieht sich auf den Brutto-Kaufpreis.</div>
+      {% else %}
+        <div class="text-xs text-slate-500">Schwellenwert bezieht sich auf den Netto-Verkaufspreis (nach 15 % Fee).</div>
+      {% endif %}
+    </form>
+
+    <form method="post" action="{{ url_for('refresh_item', item_id=it.id, cat=request.args.get('cat')) }}">
+      <button class="px-3 py-1.5 rounded bg-amber-600 hover:bg-amber-500 text-sm">Preis jetzt aktualisieren</button>
+    </form>
+
+    {% if it.item_type == 'tracking' %}
+    <div>
+      <button onclick="document.getElementById('promote-detail').classList.toggle('hidden')"
+              class="px-3 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 text-sm">
+        Gekauft
+      </button>
+      <div id="promote-detail" class="hidden mt-2">
+        <form method="post" action="{{ url_for('promote_item', item_id=it.id) }}" class="flex items-center gap-2">
+          <label class="text-xs text-slate-300">Kaufpreis (€)</label>
+          <input name="buy_eur" inputmode="decimal" placeholder="z. B. 6,50"
+                 class="bg-slate-700 rounded px-2 py-1 text-sm w-24" />
+          <button class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-sm">Bestätigen</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function boot() {
+  const payload = {{ chart|tojson|safe }};
+  if (window.renderDetailChart) {
+    window.renderDetailChart('priceChart', payload);
+  } else {
+    setTimeout(boot, 50);
+  }
+})();
+</script>

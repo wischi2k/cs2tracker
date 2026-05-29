@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block content %}
+{% set sel_cat = request.args.get('cat','Alle') %}
+{% set active = (it.active|int if it.active is not none else 1) %}
+
+<div class="grid grid-cols-[1fr,340px] gap-6">
+  <!-- Linke Seite: Formular -->
+  <section class="rounded-xl border border-slate-700/50 bg-slate-800/60 p-5">
+    <h2 class="text-lg font-semibold mb-4">Item bearbeiten</h2>
+
+    {# Hinweis-Banner nur wenn DEAKTIV #}
+    {% if active == 0 %}
+      <div class="rounded-lg border border-rose-700/40 bg-rose-900/30 text-rose-200 px-4 py-2 mb-4">
+        Dieses Item ist <b>deaktiviert</b> und wird in Chart/Alarms/Statistiken ignoriert.
+      </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('update_item', item_id=it.id) }}" class="space-y-4">
+      <div>
+        <label class="block text-sm mb-1">Anzeige-Name (optional)</label>
+        <input name="name" value="{{ it.display_name or '' }}" class="w-full bg-slate-800 rounded px-3 py-2" />
+        <div class="text-xs text-slate-400 mt-1">Leer lassen, um den automatisch ermittelten Namen zu verwenden.</div>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-2">Typ</label>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="item_type" value="inventory"
+                   {{ 'checked' if (it.item_type or 'inventory') == 'inventory' else '' }}
+                   onchange="document.getElementById('buy-field').style.display=''"
+                   class="accent-amber-500" />
+            <span class="text-sm">Inventar</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="item_type" value="tracking"
+                   {{ 'checked' if it.item_type == 'tracking' else '' }}
+                   onchange="document.getElementById('buy-field').style.display='none'"
+                   class="accent-amber-500" />
+            <span class="text-sm">Tracking</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="buy-field" {{ 'style="display:none"' if it.item_type == 'tracking' else '' }}>
+        <label class="block text-sm mb-1">Kaufpreis (€)</label>
+        <input name="buy" value="{{ '' if it.buy is none else ('%.2f' % it.buy).replace('.',',') }}"
+               class="w-48 bg-slate-800 rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Steam Market URL (optional)</label>
+        <input name="steam_url" placeholder="https://steamcommunity.com/market/listings/730/..."
+               class="w-full bg-slate-800 rounded px-3 py-2" />
+        <div class="text-xs text-slate-400 mt-1">
+          Wenn angegeben, wird der Market-Hash angepasst und Metadaten (Name, Icon, Kategorie) werden neu gezogen.
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Market-Hash (exakt)</label>
+        <input name="market_hash" value="{{ it.market_hash or '' }}" class="w-full bg-slate-800 rounded px-3 py-2" disabled />
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Kategorie</label>
+        <select name="category" class="w-full bg-slate-800 rounded px-3 py-2">
+          <option value=""></option>
+          {% for c in categories %}
+            <option value="{{ c }}" {{ 'selected' if it.category==c else '' }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+        <div>
+          <label class="block text-sm mb-1">Icon URL (optional)</label>
+          <input name="icon_url" value="{{ it.icon_url or '' }}" class="w-full bg-slate-800 rounded px-3 py-2" placeholder="https://..." />
+          <div class="text-xs text-slate-400 mt-1">Icon von Steam Market oder eigene URL. Leer lassen, um Auto-Fetch zu ermöglichen.</div>
+          {% if it.icon_url %}
+            <div class="mt-2">
+              <img src="{{ it.icon_url }}" alt="Icon" class="h-16 w-16 rounded" />
+            </div>
+          {% endif %}
+        </div>
+
+      <div class="flex gap-2">
+        <button class="rounded-lg px-4 py-2 bg-amber-600 hover:bg-amber-500">Speichern</button>
+        <a href="{{ url_for('item', item_id=it.id, cat=sel_cat) }}"
+           class="rounded-lg px-4 py-2 bg-slate-700/60 hover:bg-slate-600">Abbrechen</a>
+      </div>
+    </form>
+  </section>
+
+  <!-- Rechte Spalte: Aktionen -->
+  <aside class="space-y-4">
+    <div class="rounded-xl border border-slate-700/50 bg-slate-800/60 p-5">
+      <h3 class="text-sm font-semibold mb-3">Status & Aktionen</h3>
+      <form method="post" action="{{ url_for('set_item_status', item_id=it.id, cat=sel_cat) }}" class="space-y-2">
+        {% if active == 1 %}
+          <button class="w-full rounded-lg px-4 py-2 bg-rose-600 hover:bg-rose-500">Deaktivieren</button>
+          <div class="text-[11px] text-slate-400">
+            Deaktivierte Items erscheinen weiter in der Liste, werden aber aus Charts, Alarms & Auswertungen ausgeschlossen.
+          </div>
+        {% else %}
+          <button class="w-full rounded-lg px-4 py-2 bg-emerald-600 hover:bg-emerald-500">Aktivieren</button>
+          <div class="text-[11px] text-slate-400">
+            Aktivierte Items werden wieder vollständig berücksichtigt.
+          </div>
+        {% endif %}
+      </form>
+    </div>
+
+    <div class="rounded-xl border border-slate-700/50 bg-slate-800/60 p-5">
+      <h3 class="text-sm font-semibold mb-3">Gefahrenzone</h3>
+      <form method="post" action="{{ url_for('delete_item', item_id=it.id) }}"
+            onsubmit="return confirm('Wirklich löschen?')">
+        <button class="w-full rounded-lg px-4 py-2 bg-red-600 hover:bg-red-500">Löschen</button>
+      </form>
+    </div>
+  </aside>
+</div>
+{% endblock %}

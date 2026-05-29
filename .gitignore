@@ -1,0 +1,31 @@
+# Environment
+.env
+
+# Database
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code local settings
+.claude/
+
+# Temp/test files
+__verify.py
+__write_test.txt
+z_test.*
+test_*.sqlite*

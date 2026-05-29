@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS2 Tracker</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}"/>
+
+  <style>
+    img.item-icon { max-width: 44px; max-height: 44px; object-fit: contain; border-radius: .375rem }
+    img.item-hero { max-width: 160px; max-height: 160px; object-fit: contain; border-radius: .5rem }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns" defer></script>
+  <script src="{{ url_for('static', filename='js/chart-helpers.js') }}" defer></script>
+</head>
+<body class="bg-slate-900 text-slate-100">
+  <div class="max-w-[1400px] mx-auto px-4 py-5">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-xl font-semibold tracking-tight">CS2 Tracker</h1>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('index') }}" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Home</a>
+        {% if setup_completed_global %}
+          <a href="{{ url_for('settings') }}" class="text-xs px-2 py-1 rounded bg-slate-800 hover:bg-slate-700">Settings</a>
+        {% else %}
+          <a href="{{ url_for('setup') }}" class="text-xs px-2 py-1 rounded bg-amber-700 hover:bg-amber-600">Setup</a>
+        {% endif %}
+        <div class="text-xs text-slate-400">Steam-Gebuehr fix: 15 %</div>
+      </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mb-4 px-4 py-3 rounded-lg {{ 'bg-green-900 text-green-100 border border-green-700' if category == 'success' else 'bg-blue-900 text-blue-100 border border-blue-700' if category == 'info' else 'bg-red-900 text-red-100 border border-red-700' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-2xl space-y-6">
+  <div>
+    <h2 class="text-lg font-semibold">Setup-Assistent</h2>
+    <p class="text-sm text-slate-300">Fuehre die Grundkonfiguration im Browser durch. Kein manuelles Editieren von Dateien noetig.</p>
+  </div>
+
+  <section class="bg-slate-800 rounded-xl p-4 space-y-3 border border-slate-700">
+    <h3 class="font-medium">1) Grundkonfiguration</h3>
+    <form method="post" action="{{ url_for('setup_general') }}" class="space-y-3">
+      <div>
+        <label class="block text-sm mb-1">Preisupdate-Intervall (Minuten)</label>
+        <input type="number" min="5" max="1440" name="price_update_interval_minutes" value="{{ interval }}" class="w-full bg-slate-900 rounded px-3 py-2">
+        <p class="text-xs text-slate-400 mt-1">Steuert den internen Auto-Refresh der App. Ein externer systemd/cron Job ist optionaler Fallback.</p>
+      </div>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" name="notifications_enabled" {{ 'checked' if notifications_enabled else '' }}>
+        Benachrichtigungen aktivieren
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" name="summary_enabled" {{ 'checked' if summary_enabled else '' }}>
+        Telegram-Zusammenfassung aktivieren
+      </label>
+      <div>
+        <label class="block text-sm mb-1">Zusammenfassung: Intervall (Tage)</label>
+        <input type="number" min="1" max="365" name="summary_interval_days" value="{{ summary_interval_days }}" class="w-full bg-slate-900 rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Zusammenfassung: Versandzeit (HH:MM)</label>
+        <input type="time" name="summary_send_time" value="{{ summary_send_time }}" class="w-full bg-slate-900 rounded px-3 py-2">
+        <p class="text-xs text-slate-400 mt-1">Die Uhrzeit verwendet die Server-Zeitzone.</p>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Zugriff auf Web-UI</label>
+        <select name="ui_access_scope" class="w-full bg-slate-900 rounded px-3 py-2">
+          <option value="private_network" {{ 'selected' if ui_access_scope == 'private_network' else '' }}>
+            Lokales Netzwerk (empfohlen)
+          </option>
+          <option value="local_only" {{ 'selected' if ui_access_scope == 'local_only' else '' }}>
+            Nur lokal auf dem Server
+          </option>
+        </select>
+        <p class="text-xs text-slate-400 mt-1">
+          Schuetzt vor Internetzugriff auf Anwendungsebene. Fuer externen Zugriff weiterhin Firewall/Router geschlossen halten.
+        </p>
+      </div>
+      <div>
+        <button class="px-3 py-2 rounded bg-amber-600 hover:bg-amber-500">Speichern</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-slate-800 rounded-xl p-4 space-y-3 border border-slate-700">
+    <h3 class="font-medium">2) Telegram verbinden</h3>
+    <p class="text-sm text-slate-300">Token und Chat-ID aus BotFather/Telegram eintragen. Danach wird eine Testnachricht gesendet.</p>
+    <form method="post" action="{{ url_for('setup_telegram') }}" class="space-y-3">
+      <div>
+        <label class="block text-sm mb-1">Bot Token</label>
+        <input type="text" name="bot_token" placeholder="123456:ABCdef..." class="w-full bg-slate-900 rounded px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Chat ID</label>
+        <input type="text" name="chat_id" placeholder="123456789" class="w-full bg-slate-900 rounded px-3 py-2">
+      </div>
+      <div class="text-xs {{ 'text-green-400' if telegram_configured else 'text-slate-400' }}">
+        Status: {{ 'verbunden' if telegram_configured else 'nicht verbunden' }}
+      </div>
+      <div>
+        <button class="px-3 py-2 rounded bg-sky-700 hover:bg-sky-600">Telegram testen & speichern</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-2">
+    <h3 class="font-medium">3) Setup abschliessen</h3>
+    <form method="post" action="{{ url_for('setup_complete') }}">
+      <button class="px-3 py-2 rounded bg-green-700 hover:bg-green-600">Setup abschliessen</button>
+    </form>
+    {% if setup_completed %}
+      <p class="text-sm text-green-400">Setup ist bereits abgeschlossen.</p>
+    {% endif %}
+  </section>
+</div>
+
+{% endblock %}
