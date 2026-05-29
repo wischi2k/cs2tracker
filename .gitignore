@@ -24,6 +24,11 @@ build/
 # Claude Code local settings
 .claude/
 
+# Private ops/infrastructure logs — never commit
+docs/DEPLOYMENT_DOKU.md
+docs/*_PRIVAT.md
+docs/*_INTERN.md
+
 # Temp/test files
 __verify.py
 __write_test.txt

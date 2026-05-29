@@ -168,13 +168,13 @@ Beispiel Timer fuer `scripts.fetch_all_prices`:
 1. Projekt kopieren (vom Windows-Client):
 
 ```bash
-scp -r "E:\Code\cs2tracker_full_package_arch" cs2@<SERVER-IP>:/home/cs2/
+scp -r "E:\Code\cs2tracker_full_package_arch" <username>@<SERVER-IP>:/home/<username>/
 ```
 
 2. Venv auf Debian neu erstellen (venv ist nicht plattformportabel):
 
 ```bash
-cd /home/cs2/cs2tracker_full_package_arch
+cd /home/<username>/cs2tracker_full_package_arch
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -208,10 +208,10 @@ Description=CS2 Tracker
 After=network.target
 
 [Service]
-User=cs2
-WorkingDirectory=/home/cs2/cs2tracker_full_package_arch
-EnvironmentFile=/home/cs2/cs2tracker_full_package_arch/.env
-ExecStart=/home/cs2/cs2tracker_full_package_arch/.venv/bin/python run.py
+User=<username>
+WorkingDirectory=/home/<username>/cs2tracker_full_package_arch
+EnvironmentFile=/home/<username>/cs2tracker_full_package_arch/.env
+ExecStart=/home/<username>/cs2tracker_full_package_arch/.venv/bin/python run.py
 Restart=always
 RestartSec=5
 

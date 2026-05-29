@@ -4,7 +4,7 @@
 # Einmalige Migration: Alte CS2-Tracker-Installation → git-basiertes Deployment
 #
 # Voraussetzungen:
-#   - Ausführen als Benutzer cs2 (oder mit sudo)
+#   - Ausführen als App-Benutzer (z.B. cs2tracker) oder mit sudo
 #   - OLD_DIR muss auf das aktuelle Installationsverzeichnis zeigen
 #   - NEW_DIR ist der neue Pfad, in dem der Tracker künftig lebt
 #

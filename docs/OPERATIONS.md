@@ -49,10 +49,10 @@ Description=CS2 Tracker price fetch
 
 [Service]
 Type=oneshot
-User=cs2
-WorkingDirectory=/home/cs2/cs2tracker_full_package_arch
-EnvironmentFile=/home/cs2/cs2tracker_full_package_arch/.env
-ExecStart=/home/cs2/cs2tracker_full_package_arch/.venv/bin/python -m scripts.fetch_all_prices
+User=<username>
+WorkingDirectory=/home/<username>/cs2tracker_full_package_arch
+EnvironmentFile=/home/<username>/cs2tracker_full_package_arch/.env
+ExecStart=/home/<username>/cs2tracker_full_package_arch/.venv/bin/python -m scripts.fetch_all_prices
 ```
 
 Timer `/etc/systemd/system/cs2tracker-fetch.timer`:
