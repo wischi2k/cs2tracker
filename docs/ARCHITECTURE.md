@@ -34,7 +34,7 @@ Wiring passiert zentral in `app/__init__.py`:
 - `ConfigRepository`
 - `SteamClient`
 - `TelegramClient`
-- `ItemService`
+- `ItemService` (bekommt `telegram` fuer Alert-Versand)
 - `SetupService`
 - Route-Registrierung
 
@@ -49,6 +49,26 @@ Damit sind Abhaengigkeiten explizit und austauschbar.
   - `ItemRepository.ensure_schema()` fuer fachliche Tabellen
   - `ConfigRepository.ensure_schema()` fuer Setup/Secrets
 
+### Tabellen (fachlich)
+
+| Tabelle | Zweck |
+|---------|-------|
+| `items` | Alle Items (Inventar und Tracking), `item_type IN ('inventory','tracking')` |
+| `prices` | Preis-Snapshots je Item und Timestamp |
+| `alerts` | Preisalarm pro Item: Schwellenwert, Richtung, Auslöse-Zeitpunkt |
+
+### Item-Typen
+
+- **inventory**: Bereits gekaufte Items. Alert-Schwelle bezieht sich auf den Netto-Verkaufspreis (nach 15 % Steam-Fee).
+- **tracking**: Wunschliste. Alert-Schwelle bezieht sich auf den Brutto-Kaufpreis. Standardrichtung: Unterschreitung (≤).
+
+### Alert-Lebenszyklus
+
+1. Alert wird per UI gesetzt (`threshold_net_eur`, `above_threshold`).
+2. Nach jedem Preisfetch prüft `ItemService.check_and_fire_alerts()` alle aktiven Alerts.
+3. Wird die Bedingung erfüllt: Telegram-Nachricht, `triggered_at` gesetzt, `threshold_net_eur` auf NULL (einmalige Auslösung).
+4. `triggered_at` bleibt im Row erhalten und wird als vertikale Linie im Chart dargestellt.
+
 ## Endpoint-Kompatibilitaet
 
 Die Route-Registrierung nutzt Endpoint-Namen aus dem Altbestand (`index`, `item`, `add`, `update_item`, `set_alert`, ...), damit bestehende Templates ohne Bruch weiterlaufen.
@@ -60,7 +80,7 @@ Die Route-Registrierung nutzt Endpoint-Namen aus dem Altbestand (`index`, `item`
 
 ## Naechste Refactor-Schritte
 
-1. `AlertService` separat extrahieren.
+1. `AlertService` separat extrahieren (aktuell in `ItemService`).
 2. `PriceService` separat extrahieren.
 3. Repository-Tests mit temporaerer SQLite-DB.
 4. API-/HTML-Endpunkte schrittweise in Blueprints aufteilen.

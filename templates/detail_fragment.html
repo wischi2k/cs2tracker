@@ -9,35 +9,56 @@
     {% endif %}
     <div>
       <div class="text-lg font-semibold">{{ it.name }}</div>
-      <div class="text-xs text-slate-400 mt-0.5">Steam Market &middot; CS2</div>
-    </div>
-  </div>
-
-  {# KPI-Cards: 4er-Grid #}
-  <div class="flex gap-3 flex-wrap">
-    <div class="kpi-card">
-      <div class="kpi-label">Kaufpreis</div>
-      <div class="kpi-value">{{ '%.2f'|format(it.buy) if it.buy is not none else '—' }} €</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Brutto</div>
-      <div class="kpi-value">{{ '%.2f'|format(it.cur) if it.cur is not none else '—' }} €</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Netto (15 %)</div>
-      <div class="kpi-value">{{ '%.2f'|format(it.net) if it.net is not none else '—' }} €</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Δ Netto</div>
-      <div class="kpi-value">
-        {% if it.diff_n is not none %}
-          <span class="{{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
-            {{ '+' if it.diff_n >= 0 else '' }}{{ '%.2f'|format(it.diff_n) }} €
-          </span>
-        {% else %}—{% endif %}
+      <div class="text-xs text-slate-400 mt-0.5">Steam Market &middot; CS2
+        {% if it.item_type == 'tracking' %}
+          &middot; <span class="text-amber-400">Tracking</span>
+        {% endif %}
       </div>
     </div>
   </div>
+
+  {# KPI-Cards #}
+  {% if it.item_type == 'tracking' %}
+    <div class="flex gap-3 flex-wrap">
+      <div class="kpi-card">
+        <div class="kpi-label">Aktueller Preis</div>
+        <div class="kpi-value">{{ '%.2f'|format(it.cur) if it.cur is not none else '—' }} €</div>
+      </div>
+      {% if alert_th is not none %}
+      <div class="kpi-card">
+        <div class="kpi-label">Zielpreis</div>
+        <div class="kpi-value {{ 'glow-positive' if it.cur is not none and it.cur <= alert_th else '' }}">
+          {{ '%.2f'|format(alert_th) }} €
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="flex gap-3 flex-wrap">
+      <div class="kpi-card">
+        <div class="kpi-label">Kaufpreis</div>
+        <div class="kpi-value">{{ '%.2f'|format(it.buy) if it.buy is not none else '—' }} €</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Brutto</div>
+        <div class="kpi-value">{{ '%.2f'|format(it.cur) if it.cur is not none else '—' }} €</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Netto (15 %)</div>
+        <div class="kpi-value">{{ '%.2f'|format(it.net) if it.net is not none else '—' }} €</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Δ Netto</div>
+        <div class="kpi-value">
+          {% if it.diff_n is not none %}
+            <span class="{{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
+              {{ '+' if it.diff_n >= 0 else '' }}{{ '%.2f'|format(it.diff_n) }} €
+            </span>
+          {% else %}—{% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
   {# Chart #}
   <div class="chart-wrap p-3">
@@ -50,17 +71,63 @@
   </div>
 
   {# Aktionen #}
-  <div class="flex flex-wrap items-center gap-3">
-    <form method="post" action="{{ url_for('set_alert', item_id=it.id) }}" class="flex items-center gap-2">
-      <label class="text-sm text-slate-300">Netto-Alarm &ge;</label>
-      <input name="threshold" class="input w-24 text-sm"
-             value="{{ alert_th if alert_th is not none else '' }}" placeholder="z.B. 7.00">
-      <button class="btn btn-slate btn-sm">Speichern</button>
+  <div class="flex flex-wrap items-start gap-3">
+
+    {# Alert-Formular #}
+    <form method="post" action="{{ url_for('set_alert', item_id=it.id) }}" class="space-y-2">
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-slate-300">Preis-Alarm</label>
+        <input name="threshold" class="input w-24 text-sm"
+               value="{{ alert_th if alert_th is not none else '' }}" placeholder="z.B. 7.00">
+        <button class="btn btn-slate btn-sm">Speichern</button>
+      </div>
+      <div class="flex gap-4 text-sm">
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="radio" name="above_threshold" value="0"
+                 {{ 'checked' if not alert_above else '' }} class="accent-amber-500" />
+          <span class="text-slate-300">≤ Unterschreitung
+            <span class="text-slate-500 text-xs">(Tracking-Standard)</span>
+          </span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="radio" name="above_threshold" value="1"
+                 {{ 'checked' if alert_above else '' }} class="accent-amber-500" />
+          <span class="text-slate-300">≥ Überschreitung
+            <span class="text-slate-500 text-xs">(Inventar-Standard)</span>
+          </span>
+        </label>
+      </div>
+      <div class="text-xs text-slate-500">
+        {% if it.item_type == 'tracking' %}
+          Schwellenwert = Brutto-Kaufpreis. Alert löscht sich nach einmaliger Auslösung.
+        {% else %}
+          Schwellenwert = Netto-Verkaufspreis (nach 15 % Fee). Alert löscht sich nach einmaliger Auslösung.
+        {% endif %}
+      </div>
     </form>
 
     <form method="post" action="{{ url_for('refresh_item', item_id=it.id, cat=request.args.get('cat')) }}">
       <button class="btn btn-amber btn-sm">Preis aktualisieren</button>
     </form>
+
+    {# Gekauft-Button für Tracking-Items #}
+    {% if it.item_type == 'tracking' %}
+    <div>
+      <button onclick="document.getElementById('promote-detail').classList.toggle('hidden')"
+              class="btn btn-sm" style="background:var(--c-accent-2,#059669)">
+        Gekauft
+      </button>
+      <div id="promote-detail" class="hidden mt-2">
+        <form method="post" action="{{ url_for('promote_item', item_id=it.id) }}"
+              class="flex items-center gap-2">
+          <label class="text-xs text-slate-300">Kaufpreis (€)</label>
+          <input name="buy_eur" inputmode="decimal" placeholder="z. B. 6,50"
+                 class="input text-sm w-24" />
+          <button class="btn btn-sm" style="background:var(--c-accent-2,#059669)">Bestätigen</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </div>
 

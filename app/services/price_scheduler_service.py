@@ -81,6 +81,7 @@ class PriceSchedulerService:
 
         try:
             updated_count, _skipped_count = self.item_service.refresh_all_active_prices()
+            self.item_service.check_and_fire_alerts()
             finished_ts = int(time.time())
             self.config_repo.set_value("auto_refresh_last_run_ts", str(finished_ts))
             self.config_repo.set_value("auto_refresh_last_status", "ok")

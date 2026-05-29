@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Portfolio-Summary-Header -->
+<!-- Portfolio-Summary-Header (nur Inventar-Items) -->
 {% if portfolio and portfolio.count > 0 %}
 <div class="portfolio-summary mb-3">
   <div class="portfolio-summary__item">
-    <span class="portfolio-summary__label">Items</span>
+    <span class="portfolio-summary__label">Inventar</span>
     <span class="portfolio-summary__value">{{ portfolio.count }}</span>
   </div>
   <div class="portfolio-summary__sep"></div>
@@ -45,9 +45,29 @@
   <aside class="space-y-3">
     {% set sel_cat = request.args.get('cat','Alle') %}
 
-    {% for it in items %}
+    <!-- Inventar -->
+    <div class="flex items-center gap-2 mt-1">
+      <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Inventar</span>
+      <span class="text-xs text-slate-500">({{ inventory_items|length }})</span>
+    </div>
+    {% for it in inventory_items %}
       {% include '_item_card.html' %}
     {% endfor %}
+    {% if not inventory_items %}
+      <div class="text-xs text-slate-500 italic px-1">Keine Inventar-Items.</div>
+    {% endif %}
+
+    <!-- Tracking -->
+    <div class="flex items-center gap-2 mt-4">
+      <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Tracking</span>
+      <span class="text-xs text-slate-500">({{ tracking_items|length }})</span>
+    </div>
+    {% for it in tracking_items %}
+      {% include '_item_card.html' %}
+    {% endfor %}
+    {% if not tracking_items %}
+      <div class="text-xs text-slate-500 italic px-1">Keine Tracking-Items.</div>
+    {% endif %}
 
     <a href="{{ url_for('add') }}" class="btn btn-amber block text-center rounded-xl py-2 mt-2">
       + Hinzufügen
@@ -60,6 +80,7 @@
       {% set it = selected.it %}
       {% set chart = selected.chart %}
       {% set alert_th = selected.alert_th %}
+      {% set alert_above = selected.alert_above %}
       {% include 'detail_fragment.html' %}
     {% else %}
       <div class="card flex flex-col items-center justify-center gap-3 py-12 text-center">

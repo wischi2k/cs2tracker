@@ -1,34 +1,24 @@
-name: Deploy to Intel NUC
+name: Deploy to NUC
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy:
-    name: Deploy CS2 Tracker
-    runs-on: self-hosted          # läuft auf dem Runner, der auf dem NUC installiert ist
+    runs-on: self-hosted
 
     steps:
-      - name: Checkout (nur als Marker – echter Pull passiert auf dem Server)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
       - name: Pull latest code
         run: |
-          cd ${{ vars.APP_DIR }}
-          git fetch origin main
-          git reset --hard origin/main
+          git -C $HOME/cs2tracker_full_package_arch fetch origin main
+          git -C $HOME/cs2tracker_full_package_arch reset --hard origin/main
 
-      - name: Install/update Python dependencies
+      - name: Install dependencies
         run: |
-          cd ${{ vars.APP_DIR }}
-          .venv/bin/pip install -r requirements.txt --quiet
+          cd $HOME/cs2tracker_full_package_arch
+          .venv/bin/pip install -r requirements.txt -q
 
-      - name: Restart systemd service
+      - name: Restart service
         run: |
           sudo systemctl restart cs2tracker
-          sleep 3
-          sudo systemctl is-active --quiet cs2tracker && echo "✅ cs2tracker läuft" || (echo "❌ Service-Start fehlgeschlagen" && exit 1)

@@ -51,6 +51,13 @@ class ItemRepository:
                 con.execute("ALTER TABLE items ADD COLUMN icon_updated_at INTEGER DEFAULT 0")
             if "is_active" not in cols:
                 con.execute("ALTER TABLE items ADD COLUMN is_active INTEGER DEFAULT 1")
+            if "item_type" not in cols:
+                con.execute("ALTER TABLE items ADD COLUMN item_type TEXT NOT NULL DEFAULT 'inventory'")
+                con.execute("UPDATE items SET item_type='inventory' WHERE item_type IS NULL OR item_type NOT IN ('inventory','tracking')")
+
+            alert_cols = {r["name"] for r in con.execute("PRAGMA table_info(alerts)").fetchall()}
+            if "triggered_at" not in alert_cols:
+                con.execute("ALTER TABLE alerts ADD COLUMN triggered_at INTEGER")
             con.commit()
         finally:
             con.close()
@@ -69,6 +76,7 @@ class ItemRepository:
                     IFNULL(i.icon_updated_at,0) AS icon_updated_at,
                     i.category,
                     IFNULL(i.is_active,1) AS is_active,
+                    IFNULL(i.item_type,'inventory') AS item_type,
                     (
                         SELECT p.price_cents
                         FROM prices p
@@ -98,6 +106,7 @@ class ItemRepository:
                     IFNULL(i.icon_updated_at,0) AS icon_updated_at,
                     i.category,
                     IFNULL(i.is_active,1) AS is_active,
+                    IFNULL(i.item_type,'inventory') AS item_type,
                     (
                         SELECT p.price_cents
                         FROM prices p
@@ -192,30 +201,38 @@ class ItemRepository:
             con.close()
 
     def get_alert_threshold(self, item_id: int) -> float | None:
+        data = self.get_alert_data(item_id)
+        return data["threshold"] if data else None
+
+    def get_alert_data(self, item_id: int) -> dict[str, Any] | None:
         con = get_connection()
         try:
             row = con.execute(
-                "SELECT threshold_net_eur FROM alerts WHERE item_id=?",
+                "SELECT threshold_net_eur, above_threshold, triggered_at FROM alerts WHERE item_id=?",
                 (item_id,),
             ).fetchone()
-            if row is None or row[0] is None:
+            if row is None:
                 return None
-            return float(row[0])
+            return {
+                "threshold": float(row[0]) if row[0] is not None else None,
+                "above": bool(int(row[1] or 0)),
+                "triggered_at": int(row[2]) if row[2] is not None else None,
+            }
         finally:
             con.close()
 
-    def upsert_alert_threshold(self, item_id: int, threshold: float) -> None:
+    def upsert_alert_threshold(self, item_id: int, threshold: float, above: bool = True) -> None:
         con = get_connection()
         try:
             con.execute(
                 """
                 INSERT INTO alerts(item_id, threshold_net_eur, above_threshold)
-                VALUES(?, ?, 0)
+                VALUES(?, ?, ?)
                 ON CONFLICT(item_id) DO UPDATE SET
                     threshold_net_eur=excluded.threshold_net_eur,
-                    above_threshold=0
+                    above_threshold=excluded.above_threshold
                 """,
-                (item_id, threshold),
+                (item_id, threshold, 1 if above else 0),
             )
             con.commit()
         finally:
@@ -229,11 +246,66 @@ class ItemRepository:
         finally:
             con.close()
 
+    def fire_alert(self, item_id: int) -> None:
+        """Mark alert as fired: record triggered_at, clear threshold (keeps row for chart marker)."""
+        con = get_connection()
+        try:
+            con.execute(
+                """
+                UPDATE alerts
+                SET threshold_net_eur=NULL, triggered_at=?
+                WHERE item_id=?
+                """,
+                (int(time.time()), item_id),
+            )
+            con.commit()
+        finally:
+            con.close()
+
+    def get_items_with_active_alerts(self) -> list[dict[str, Any]]:
+        con = get_connection()
+        try:
+            rows = con.execute(
+                """
+                SELECT
+                    i.id,
+                    i.display_name,
+                    IFNULL(i.item_type,'inventory') AS item_type,
+                    a.threshold_net_eur,
+                    a.above_threshold,
+                    (
+                        SELECT p.price_cents
+                        FROM prices p
+                        WHERE p.item_id = i.id
+                        ORDER BY p.ts DESC
+                        LIMIT 1
+                    ) AS current_price_cents
+                FROM items i
+                JOIN alerts a ON a.item_id = i.id
+                WHERE a.threshold_net_eur IS NOT NULL
+                AND IFNULL(i.is_active, 1) = 1
+                """
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            con.close()
+
     def get_item_name(self, item_id: int) -> str | None:
         con = get_connection()
         try:
             row = con.execute("SELECT display_name FROM items WHERE id=?", (item_id,)).fetchone()
             return None if row is None else str(row[0])
+        finally:
+            con.close()
+
+    def promote_to_inventory(self, item_id: int, buy_price_cents: int | None) -> None:
+        con = get_connection()
+        try:
+            con.execute(
+                "UPDATE items SET item_type='inventory', buy_price_cents=? WHERE id=?",
+                (buy_price_cents, item_id),
+            )
+            con.commit()
         finally:
             con.close()
 
@@ -244,15 +316,16 @@ class ItemRepository:
         buy_price_cents: int | None,
         icon_url: str | None,
         category: str | None,
+        item_type: str = "inventory",
     ) -> int:
         con = get_connection()
         try:
             con.execute(
                 """
-                INSERT INTO items (display_name, market_hash, buy_price_cents, icon_url, category, is_active)
-                VALUES (?, ?, ?, ?, ?, 1)
+                INSERT INTO items (display_name, market_hash, buy_price_cents, icon_url, category, is_active, item_type)
+                VALUES (?, ?, ?, ?, ?, 1, ?)
                 """,
-                (display_name, market_hash, buy_price_cents, icon_url, category),
+                (display_name, market_hash, buy_price_cents, icon_url, category, item_type),
             )
             if icon_url and icon_url.strip():
                 con.execute(
@@ -273,36 +346,68 @@ class ItemRepository:
         buy_price_cents: int | None,
         category: str | None,
         icon_url: str | None,
+        item_type: str | None = None,
     ) -> None:
         con = get_connection()
         try:
-            con.execute(
-                """
-                UPDATE items
-                SET
-                    display_name=?,
-                    market_hash=?,
-                    buy_price_cents=?,
-                    category=?,
-                    icon_url=?,
-                    icon_updated_at=CASE
-                        WHEN COALESCE(icon_url,'') <> COALESCE(?, '')
-                        THEN ?
-                        ELSE IFNULL(icon_updated_at,0)
-                    END
-                WHERE id=?
-                """,
-                (
-                    display_name,
-                    market_hash,
-                    buy_price_cents,
-                    category,
-                    icon_url,
-                    icon_url,
-                    int(time.time()),
-                    item_id,
-                ),
-            )
+            if item_type is not None:
+                con.execute(
+                    """
+                    UPDATE items
+                    SET
+                        display_name=?,
+                        market_hash=?,
+                        buy_price_cents=?,
+                        category=?,
+                        icon_url=?,
+                        item_type=?,
+                        icon_updated_at=CASE
+                            WHEN COALESCE(icon_url,'') <> COALESCE(?, '')
+                            THEN ?
+                            ELSE IFNULL(icon_updated_at,0)
+                        END
+                    WHERE id=?
+                    """,
+                    (
+                        display_name,
+                        market_hash,
+                        buy_price_cents,
+                        category,
+                        icon_url,
+                        item_type,
+                        icon_url,
+                        int(time.time()),
+                        item_id,
+                    ),
+                )
+            else:
+                con.execute(
+                    """
+                    UPDATE items
+                    SET
+                        display_name=?,
+                        market_hash=?,
+                        buy_price_cents=?,
+                        category=?,
+                        icon_url=?,
+                        icon_updated_at=CASE
+                            WHEN COALESCE(icon_url,'') <> COALESCE(?, '')
+                            THEN ?
+                            ELSE IFNULL(icon_updated_at,0)
+                        END
+                    WHERE id=?
+                    """,
+                    (
+                        display_name,
+                        market_hash,
+                        buy_price_cents,
+                        category,
+                        icon_url,
+                        icon_url,
+                        int(time.time()),
+                        item_id,
+                    ),
+                )
             con.commit()
         finally:
             con.close()

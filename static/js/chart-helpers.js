@@ -46,6 +46,31 @@
 
     const ctx = el.getContext("2d");
 
+    const triggeredAt = typeof d?.triggered_at === "number" ? d.triggered_at * 1000 : null;
+    const triggeredAtPlugin = {
+      id: "triggeredAt",
+      afterDraw(chart) {
+        if (!triggeredAt) return;
+        const xAxis = chart.scales.x;
+        const yAxis = chart.scales.y;
+        const xPos = xAxis.getPixelForValue(triggeredAt);
+        if (xPos < xAxis.left || xPos > xAxis.right) return;
+        const c = chart.ctx;
+        c.save();
+        c.beginPath();
+        c.moveTo(xPos, yAxis.top);
+        c.lineTo(xPos, yAxis.bottom);
+        c.strokeStyle = "#f59e0b";
+        c.lineWidth = 2;
+        c.setLineDash([4, 4]);
+        c.stroke();
+        c.fillStyle = "#f59e0b";
+        c.font = "11px sans-serif";
+        c.fillText("Alarm", xPos + 4, yAxis.top + 14);
+        c.restore();
+      },
+    };
+
     _chart = new Chart(ctx, {
       type: "line",
       data: {
@@ -89,6 +114,7 @@
         },
         plugins: { legend: { display: false } },
       },
+      plugins: [triggeredAtPlugin],
     });
   };
 })();

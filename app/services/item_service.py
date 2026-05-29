@@ -1,11 +1,14 @@
 ﻿from __future__ import annotations
 
+import html
 from dataclasses import asdict
 
-from app.domain.constants import STEAM_FEE_RATE
 from app.domain.models import ItemView
 from app.infrastructure.steam_client import SteamClient
+from app.infrastructure.telegram_client import TelegramClient
 from app.repositories.item_repository import ItemRepository
+
+FEE_RATE = 0.15
 CATEGORIES = [
     "Waffen-Skin",
     "Sticker",
@@ -21,9 +24,10 @@ CATEGORIES = [
 
 
 class ItemService:
-    def __init__(self, repo: ItemRepository, steam: SteamClient) -> None:
+    def __init__(self, repo: ItemRepository, steam: SteamClient, telegram: TelegramClient | None = None) -> None:
         self.repo = repo
         self.steam = steam
+        self.telegram = telegram
 
     @staticmethod
     def _eur(cents: int | None) -> float | None:
@@ -53,10 +57,11 @@ class ItemService:
     def _to_item_view(self, row: dict) -> ItemView:
         buy_c = row.get("buy_price_cents")
         cur_c = row.get("current_price_cents")
-        net_c = None if cur_c is None else int(round(cur_c * (1 - STEAM_FEE_RATE)))
+        net_c = None if cur_c is None else int(round(cur_c * (1 - FEE_RATE)))
         category = row.get("category")
         if not category:
             category = self._infer_category((row.get("market_hash") or row.get("display_name") or ""))
+        item_type = row.get("item_type") or "inventory"
         return ItemView(
             id=int(row["id"]),
             name=row.get("display_name") or "",
@@ -64,6 +69,7 @@ class ItemService:
             icon_updated_at=int(row.get("icon_updated_at") or 0),
             cat=category,
             active=int(row.get("is_active") or 1),
+            item_type=item_type,
             buy=self._eur(buy_c),
             cur=self._eur(cur_c),
             net=self._eur(net_c),
@@ -107,6 +113,7 @@ class ItemService:
         steam_url: str,
         name_input: str,
         buy_input: str,
+        item_type: str = "inventory",
     ) -> tuple[int | None, str | None, dict]:
         mh = self.steam.parse_market_hash_from_url(steam_url)
         if not mh:
@@ -119,9 +126,9 @@ class ItemService:
         disp, icon, cat = self.steam.fetch_meta_for_hash(mh)
         if name_input:
             disp = name_input.strip()
-        buy_cents = self.parse_buy_to_cents(buy_input)
+        buy_cents = self.parse_buy_to_cents(buy_input) if item_type == "inventory" else None
 
-        new_id = self.repo.insert_item(disp, mh, buy_cents, icon, cat)
+        new_id = self.repo.insert_item(disp, mh, buy_cents, icon, cat, item_type=item_type)
         current = self.steam.fetch_price_cents(mh)
         if current is not None:
             self.repo.insert_price_snapshot(new_id, current)
@@ -135,6 +142,7 @@ class ItemService:
         buy_input: str,
         category_in: str | None,
         icon_input: str | None,
+        item_type_in: str | None = None,
     ) -> bool:
         row = self.repo.get_item_with_latest_price(item_id)
         if row is None:
@@ -144,6 +152,7 @@ class ItemService:
         market_hash = row.get("market_hash") or ""
         icon_url = row.get("icon_url")
         category = category_in or row.get("category")
+        item_type = item_type_in if item_type_in in ("inventory", "tracking") else None
 
         if steam_url:
             mh_new = self.steam.parse_market_hash_from_url(steam_url)
@@ -162,8 +171,44 @@ class ItemService:
             icon_url = icon_input.strip()
 
         buy_cents = self.parse_buy_to_cents(buy_input)
-        self.repo.update_item(item_id, display_name, market_hash, buy_cents, category, icon_url)
+        self.repo.update_item(item_id, display_name, market_hash, buy_cents, category, icon_url, item_type=item_type)
         return True
+
+    def promote_to_inventory(self, item_id: int, buy_input: str) -> bool:
+        row = self.repo.get_item_with_latest_price(item_id)
+        if row is None:
+            return False
+        buy_cents = self.parse_buy_to_cents(buy_input)
+        self.repo.promote_to_inventory(item_id, buy_cents)
+        return True
+
+    def check_and_fire_alerts(self) -> None:
+        items = self.repo.get_items_with_active_alerts()
+        for row in items:
+            cur_c = row.get("current_price_cents")
+            if cur_c is None:
+                continue
+            threshold = float(row["threshold_net_eur"])
+            above = bool(int(row.get("above_threshold") or 0))
+            item_type = row.get("item_type") or "inventory"
+
+            if item_type == "inventory":
+                net_price = cur_c * (1 - FEE_RATE) / 100.0
+                triggered = net_price >= threshold if above else net_price <= threshold
+            else:
+                gross_price = cur_c / 100.0
+                triggered = gross_price <= threshold if not above else gross_price >= threshold
+
+            if triggered:
+                item_name = row.get("display_name") or f"Item #{row['id']}"
+                direction = "≥" if above else "≤"
+                if self.telegram:
+                    self.telegram.send(
+                        f"🔔 <b>{html.escape(item_name)}</b>\n"
+                        f"Preis {direction} {threshold:.2f} EUR erreicht.\n"
+                        f"Aktuell: {cur_c / 100.0:.2f} EUR"
+                    )
+                self.repo.fire_alert(int(row["id"]))
 
     def refresh_item_price(self, item_id: int) -> bool:
         row = self.repo.get_item_with_latest_price(item_id)

@@ -1,22 +1,17 @@
 {# _item_card.html #}
-{# Prüfen ob diese Karte die aktuell ausgewählte ist #}
 {% set is_selected = selected and selected.it and selected.it.id == it.id %}
 
 <div class="relative">
-  {# glow-card-inner: trägt den Spotlight-Gradient (::before) und
-     den animierten Border-Glow wenn selected (card-selected + ::after) #}
-  <div class="relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/60 hover:bg-slate-800 glow-card-inner{{ ' card-selected' if is_selected else '' }}">
+  <div class="relative overflow-hidden rounded-xl border border-slate-700/50 bg-slate-800/60 hover:bg-slate-800 glow-card-inner{{ ' card-selected' if is_selected else '' }}{% if it.item_type == 'tracking' %} border-amber-700/30{% endif %}">
 
-    {# Link zur Detailansicht – komplette Karte ist klickbar #}
-    <a
-      href="{{ url_for('item', item_id=it.id, cat=request.args.get('cat','Alle')) }}"
-      class="block"
-    >
-      <div class="relative flex items-center gap-3 p-3
-                  {% if not it.active %}opacity-60 grayscale{% endif %}">
-        {# Linke Status-Leiste, nur wenn deaktiviert #}
+    <a href="{{ url_for('item', item_id=it.id, cat=request.args.get('cat','Alle')) }}" class="block">
+      <div class="relative flex items-center gap-3 p-3 {% if not it.active %}opacity-60 grayscale{% endif %}">
+
+        {# Linke Status-Leiste #}
         {% if not it.active %}
           <div class="absolute inset-y-0 left-0 w-1.5 bg-rose-500/80"></div>
+        {% elif it.item_type == 'tracking' %}
+          <div class="absolute inset-y-0 left-0 w-1.5 bg-amber-500/60"></div>
         {% endif %}
 
         {# Icon #}
@@ -29,48 +24,82 @@
 
         {# Textblock #}
         <div class="min-w-0 flex-1">
-          {# Zeile 1: Name #}
           <div class="truncate text-sm font-semibold">{{ it.name }}</div>
 
-          {# Zeile 2: Nettowert prominent #}
-          <div class="mt-0.5 text-sm font-medium">
-            {{ it.net is not none and '%.2f'|format(it.net) ~ ' €' or '—' }}
-            <span class="text-xs text-slate-400 font-normal">netto</span>
-          </div>
-
-          {# Zeile 3: Kaufpreis sekundär #}
-          <div class="mt-0.5 text-xs text-slate-400">
-            Kauf: {% if it.buy is not none %}{{ '%.2f'|format(it.buy) }} €{% else %}—{% endif %}
-          </div>
-
-          {# Zeile 4: Delta — Netto dominant, Brutto in muted #}
-          <div class="mt-1 flex items-center gap-1.5 text-xs">
-            {% if it.diff_n is not none %}
-              <span class="font-semibold {{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
-                {{ '+' if it.diff_n >= 0 else '' }}{{ '%.2f'|format(it.diff_n) }} €
-              </span>
-            {% endif %}
-            {% if it.diff_g is not none %}
-              <span class="text-slate-500">(brutto: {{ '+' if it.diff_g >= 0 else '' }}{{ '%.2f'|format(it.diff_g) }} €)</span>
-            {% endif %}
-          </div>
+          {% if it.item_type == 'tracking' %}
+            {# Tracking: aktueller Preis prominent #}
+            <div class="mt-0.5 text-sm font-medium">
+              {{ it.cur is not none and '%.2f'|format(it.cur) ~ ' €' or '—' }}
+              <span class="text-xs text-slate-400 font-normal">aktuell</span>
+            </div>
+          {% else %}
+            {# Inventar: Netto prominent #}
+            <div class="mt-0.5 text-sm font-medium">
+              {{ it.net is not none and '%.2f'|format(it.net) ~ ' €' or '—' }}
+              <span class="text-xs text-slate-400 font-normal">netto</span>
+            </div>
+            <div class="mt-0.5 text-xs text-slate-400">
+              Kauf: {% if it.buy is not none %}{{ '%.2f'|format(it.buy) }} €{% else %}—{% endif %}
+            </div>
+            <div class="mt-1 flex items-center gap-1.5 text-xs">
+              {% if it.diff_n is not none %}
+                <span class="font-semibold {{ 'glow-positive' if it.diff_n >= 0 else 'glow-negative' }}">
+                  {{ '+' if it.diff_n >= 0 else '' }}{{ '%.2f'|format(it.diff_n) }} €
+                </span>
+              {% endif %}
+              {% if it.diff_g is not none %}
+                <span class="text-slate-500">(brutto: {{ '+' if it.diff_g >= 0 else '' }}{{ '%.2f'|format(it.diff_g) }} €)</span>
+              {% endif %}
+            </div>
+          {% endif %}
         </div>
       </div>
     </a>
 
-    {# Edit-Button separat, rechts unten #}
-    <div class="flex justify-end pb-2 pr-2">
-      <a
-        href="{{ url_for('edit_item_get', item_id=it.id, cat=request.args.get('cat','Alle')) }}"
-        class="inline-flex items-center rounded-lg px-3 py-1.5 text-sm bg-slate-700/60 hover:bg-slate-600"
-      >Bearbeiten</a>
+    {# Aktionen unten #}
+    <div class="flex justify-end gap-2 pb-2 pr-2">
+      {% if it.item_type == 'tracking' %}
+        <button onclick="togglePromote({{ it.id }})"
+                class="inline-flex items-center rounded-lg px-3 py-1.5 text-sm bg-emerald-700/60 hover:bg-emerald-600">
+          Gekauft
+        </button>
+      {% endif %}
+      <a href="{{ url_for('edit_item_get', item_id=it.id, cat=request.args.get('cat','Alle')) }}"
+         class="inline-flex items-center rounded-lg px-3 py-1.5 text-sm bg-slate-700/60 hover:bg-slate-600">
+        Bearbeiten
+      </a>
     </div>
 
-    {# Badge "Deaktiviert" oben rechts #}
+    {# Inline Kaufpreis-Formular für Tracking-Items #}
+    {% if it.item_type == 'tracking' %}
+    <div id="promote-{{ it.id }}" class="hidden px-3 pb-3">
+      <form method="post" action="{{ url_for('promote_item', item_id=it.id) }}" class="flex items-center gap-2">
+        <label class="text-xs text-slate-300">Kaufpreis (€)</label>
+        <input name="buy_eur" inputmode="decimal" placeholder="z. B. 6,50"
+               class="input text-sm w-24" />
+        <button class="btn btn-sm" style="background:var(--c-accent-2,#059669)">Bestätigen</button>
+        <button type="button" onclick="togglePromote({{ it.id }})"
+                class="btn btn-slate btn-sm">✕</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {# Badges oben rechts #}
     {% if not it.active %}
       <div class="pointer-events-none absolute right-2 top-2 rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-medium text-white">
         Deaktiviert
       </div>
+    {% elif it.item_type == 'tracking' %}
+      <div class="pointer-events-none absolute right-2 top-2 rounded-full bg-amber-600 px-2 py-0.5 text-[10px] font-medium text-white">
+        Tracking
+      </div>
     {% endif %}
   </div>
 </div>
+
+<script>
+function togglePromote(id) {
+  const el = document.getElementById('promote-' + id);
+  if (el) el.classList.toggle('hidden');
+}
+</script>

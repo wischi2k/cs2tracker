@@ -23,6 +23,26 @@
       </div>
 
       <div>
+        <label class="block text-sm mb-2">Typ</label>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="item_type" value="inventory"
+                   {{ 'checked' if (it.item_type or 'inventory') == 'inventory' else '' }}
+                   onchange="document.getElementById('buy-field').style.display=''"
+                   class="accent-amber-500" />
+            <span class="text-sm">Inventar</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="item_type" value="tracking"
+                   {{ 'checked' if it.item_type == 'tracking' else '' }}
+                   onchange="document.getElementById('buy-field').style.display='none'"
+                   class="accent-amber-500" />
+            <span class="text-sm">Tracking</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="buy-field" {{ 'style="display:none"' if it.item_type == 'tracking' else '' }}>
         <label class="block text-sm mb-1">Kaufpreis (€)</label>
         <input name="buy" value="{{ '' if it.buy is none else ('%.2f' % it.buy).replace('.',',') }}"
                class="w-48 bg-slate-800 rounded px-3 py-2" />

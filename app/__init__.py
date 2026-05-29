@@ -24,7 +24,7 @@ def create_app() -> Flask:
     config_repo = ConfigRepository()
     steam = SteamClient()
     telegram = TelegramClient(config_repo=config_repo)
-    service = ItemService(repo=repo, steam=steam)
+    service = ItemService(repo=repo, steam=steam, telegram=telegram)
     summary_service = SummaryService(repo=repo)
     setup_service = SetupService(config_repo=config_repo)
     scheduler = PriceSchedulerService(
