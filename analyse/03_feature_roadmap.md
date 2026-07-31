@@ -4,7 +4,7 @@ Stand: 2026-07-31 · Priorisiert nach Nutzwert für den realen Anwendungsfall (p
 
 ## Stufe 1 — Kernlücken im Portfolio-Modell (höchster Nutzwert)
 
-### 1.1 Stückzahl (Quantity) pro Item ⭐ wichtigste Einzelerweiterung
+### 1.1 Stückzahl (Quantity) pro Item ⭐ wichtigste Einzelerweiterung — ✅ umgesetzt (2026-07-31)
 
 Aktuell muss jedes Exemplar als eigenes Item angelegt werden. Wer 20 gleiche Kisten hält (der häufigste CS2-Investment-Fall!), legt 20 Einträge an — oder trackt falsch. Alle kommerziellen Tracker haben Mengen-Support.
 

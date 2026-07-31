@@ -17,11 +17,12 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
 
     def _portfolio_summary(items):
         active = [it for it in items if it.get("active", True) and it.get("item_type", "inventory") == "inventory"]
-        total_cur = sum(it["cur"] for it in active if it.get("cur") is not None)
-        total_net = sum(it["net"] for it in active if it.get("net") is not None)
-        total_diff_n = sum(it["diff_n"] for it in active if it.get("diff_n") is not None)
+        total_cur = sum(it["cur"] * it.get("qty", 1) for it in active if it.get("cur") is not None)
+        total_net = sum(it["net"] * it.get("qty", 1) for it in active if it.get("net") is not None)
+        total_diff_n = sum(it["diff_n"] * it.get("qty", 1) for it in active if it.get("diff_n") is not None)
         return {
             "count": len(active),
+            "total_qty": sum(it.get("qty", 1) for it in active),
             "total_cur": total_cur,
             "total_net": total_net,
             "total_diff_n": total_diff_n,
@@ -103,7 +104,8 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
         if item_type not in ("inventory", "tracking"):
             item_type = "inventory"
 
-        new_id, error, payload = service.add_item(steam_url, name_in, buy_raw, item_type=item_type)
+        qty_raw = (request.form.get("quantity") or "").strip()
+        new_id, error, payload = service.add_item(steam_url, name_in, buy_raw, item_type=item_type, qty_input=qty_raw)
         if error:
             return render_template(
                 "add.html",
@@ -137,6 +139,7 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
             "category": row.get("category") if row else None,
             "active": int(row.get("is_active") if row else 1),
             "item_type": row.get("item_type") if row else "inventory",
+            "qty": int(row.get("quantity") or 1) if row else 1,
         }
         return render_template("edit.html", it=it, sel_cat=sel_cat, categories=CATEGORIES)
 
@@ -151,6 +154,7 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
             category_in=((request.form.get("category") or "").strip() or None),
             icon_input=((request.form.get("icon_url") or "").strip() or None),
             item_type_in=(item_type_raw if item_type_raw in ("inventory", "tracking") else None),
+            qty_input=(request.form.get("quantity") or "").strip(),
         )
         if not ok:
             return _redirect_index(sel_cat)

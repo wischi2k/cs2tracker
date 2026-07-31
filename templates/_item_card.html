@@ -24,7 +24,10 @@
 
         {# Textblock #}
         <div class="min-w-0 flex-1">
-          <div class="truncate text-sm font-semibold">{{ it.name }}</div>
+          <div class="truncate text-sm font-semibold">
+            {{ it.name }}
+            {% if it.qty and it.qty > 1 %}<span class="ml-1 rounded-full bg-slate-700/70 px-1.5 py-0.5 text-[10px] font-semibold align-middle">×{{ it.qty }}</span>{% endif %}
+          </div>
 
           {% if it.item_type == 'tracking' %}
             {# Tracking: aktueller Preis prominent #}

@@ -5,6 +5,7 @@ Portfolio-Tracker für CS2 (Counter-Strike 2) Market-Items. Preise werden automa
 ## Features
 
 - **Item-Verwaltung** — Items per Steam-Market-URL hinzufügen, Kaufpreis hinterlegen, Kategorie setzen
+- **Stückzahlen** — mehrere Exemplare als ein Item mit Menge (Kaufpreis = Ø pro Stück); Portfolio-Summen rechnen Preis × Stückzahl
 - **Automatische Preisupdates** — interner Scheduler mit konfigurierbarem Intervall (5–1440 Min.)
 - **Preishistorie & Chart** — Verlauf pro Item als Zeitreihe (Chart.js)
 - **Portfolio-Übersicht** — KPI-Streifen mit Gesamtwert (Brutto/Netto) und Gesamt-Δ auf dem Dashboard

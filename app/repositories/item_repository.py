@@ -54,6 +54,8 @@ class ItemRepository:
             if "item_type" not in cols:
                 con.execute("ALTER TABLE items ADD COLUMN item_type TEXT NOT NULL DEFAULT 'inventory'")
                 con.execute("UPDATE items SET item_type='inventory' WHERE item_type IS NULL OR item_type NOT IN ('inventory','tracking')")
+            if "quantity" not in cols:
+                con.execute("ALTER TABLE items ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1")
 
             alert_cols = {r["name"] for r in con.execute("PRAGMA table_info(alerts)").fetchall()}
             if "triggered_at" not in alert_cols:
@@ -79,6 +81,7 @@ class ItemRepository:
                     i.category,
                     IFNULL(i.is_active,1) AS is_active,
                     IFNULL(i.item_type,'inventory') AS item_type,
+                    IFNULL(i.quantity,1) AS quantity,
                     (
                         SELECT p.price_cents
                         FROM prices p
@@ -109,6 +112,7 @@ class ItemRepository:
                     i.category,
                     IFNULL(i.is_active,1) AS is_active,
                     IFNULL(i.item_type,'inventory') AS item_type,
+                    IFNULL(i.quantity,1) AS quantity,
                     (
                         SELECT p.price_cents
                         FROM prices p
@@ -143,6 +147,7 @@ class ItemRepository:
                 """
                 SELECT i.id, i.display_name, i.buy_price_cents, i.market_hash,
                        IFNULL(i.item_type,'inventory') AS item_type,
+                       IFNULL(i.quantity,1) AS quantity,
                        a.threshold_net_eur, a.above_threshold
                 FROM items i
                 LEFT JOIN alerts a ON a.item_id = i.id AND a.threshold_net_eur IS NOT NULL
@@ -322,15 +327,16 @@ class ItemRepository:
         icon_url: str | None,
         category: str | None,
         item_type: str = "inventory",
+        quantity: int = 1,
     ) -> int:
         con = get_connection()
         try:
             con.execute(
                 """
-                INSERT INTO items (display_name, market_hash, buy_price_cents, icon_url, category, is_active, item_type)
-                VALUES (?, ?, ?, ?, ?, 1, ?)
+                INSERT INTO items (display_name, market_hash, buy_price_cents, icon_url, category, is_active, item_type, quantity)
+                VALUES (?, ?, ?, ?, ?, 1, ?, ?)
                 """,
-                (display_name, market_hash, buy_price_cents, icon_url, category, item_type),
+                (display_name, market_hash, buy_price_cents, icon_url, category, item_type, max(1, int(quantity))),
             )
             if icon_url and icon_url.strip():
                 con.execute(
@@ -352,6 +358,7 @@ class ItemRepository:
         category: str | None,
         icon_url: str | None,
         item_type: str | None = None,
+        quantity: int | None = None,
     ) -> None:
         con = get_connection()
         try:
@@ -366,6 +373,7 @@ class ItemRepository:
                         category=?,
                         icon_url=?,
                         item_type=?,
+                        quantity=IFNULL(?, quantity),
                         icon_updated_at=CASE
                             WHEN COALESCE(icon_url,'') <> COALESCE(?, '')
                             THEN ?
@@ -380,6 +388,7 @@ class ItemRepository:
                         category,
                         icon_url,
                         item_type,
+                        None if quantity is None else max(1, int(quantity)),
                         icon_url,
                         int(time.time()),
                         item_id,
@@ -395,6 +404,7 @@ class ItemRepository:
                         buy_price_cents=?,
                         category=?,
                         icon_url=?,
+                        quantity=IFNULL(?, quantity),
                         icon_updated_at=CASE
                             WHEN COALESCE(icon_url,'') <> COALESCE(?, '')
                             THEN ?
@@ -408,6 +418,7 @@ class ItemRepository:
                         buy_price_cents,
                         category,
                         icon_url,
+                        None if quantity is None else max(1, int(quantity)),
                         icon_url,
                         int(time.time()),
                         item_id,

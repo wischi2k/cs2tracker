@@ -18,6 +18,7 @@ class ItemView:
     net: float | None
     diff_g: float | None
     diff_n: float | None
+    qty: int = 1
 
 
 @dataclass

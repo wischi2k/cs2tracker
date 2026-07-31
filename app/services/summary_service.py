@@ -37,7 +37,10 @@ class SummaryService:
 
         for row in inventory_items:
             item_id = int(row["id"])
+            qty = max(1, int(row.get("quantity") or 1))
             name = str(row.get("display_name") or f"Item #{item_id}")
+            if qty > 1:
+                name = f"{name} (x{qty})"
 
             baseline = self.repo.get_price_at_or_before(item_id, start_ts)
             if baseline is None:
@@ -45,24 +48,24 @@ class SummaryService:
             latest = self.repo.get_latest_price_cents(item_id)
 
             if latest is not None:
-                latest_net = self._net_eur_from_cents(latest)
+                latest_net = self._net_eur_from_cents(latest) * qty
                 valuable.append({"name": name, "latest_net": latest_net})
             else:
                 latest_net = None
 
             buy_cents = row.get("buy_price_cents")
             if latest_net is not None and buy_cents is not None:
-                buy_net = self._net_eur_from_cents(int(buy_cents))
+                buy_net = self._net_eur_from_cents(int(buy_cents)) * qty
                 profit = latest_net - buy_net
                 profit_vs_buy.append({"name": name, "profit_net": profit, "latest_net": latest_net, "buy_net": buy_net})
 
             if baseline is None or latest is None:
                 continue
 
-            base_net = self._net_eur_from_cents(baseline)
+            base_net = self._net_eur_from_cents(baseline) * qty
             if base_net <= 0:
                 continue
-            latest_net_for_move = self._net_eur_from_cents(latest)
+            latest_net_for_move = self._net_eur_from_cents(latest) * qty
             delta = latest_net_for_move - base_net
             pct = (delta / base_net) * 100.0
             movement.append({"name": name, "base_net": base_net, "latest_net": latest_net_for_move, "delta_net": delta, "pct": pct})

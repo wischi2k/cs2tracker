@@ -90,3 +90,10 @@
 - Kontext: Die `prices`-Tabelle wächst mit jedem Scheduler-Lauf (Snapshots pro Item). Die korrelierte Subquery „letzter Preis pro Item" sowie Chart- und Summary-Abfragen mussten ohne Index die gesamte Historie scannen — mit wachsender Laufzeit über Monate spürbar. Zusätzlich konkurrieren Scheduler-Thread und Web-Requests um dieselbe SQLite-Datei.
 - Entscheidung: `CREATE INDEX IF NOT EXISTS idx_prices_item_ts ON prices(item_id, ts DESC)` in `ensure_schema()` (greift automatisch beim nächsten Start, auch für Bestands-DBs). `PRAGMA journal_mode=WAL` in `get_connection()` für bessere Lese-/Schreib-Parallelität und weniger `database is locked`-Risiko.
 - Konsequenz: Latest-Price-, Chart- und Summary-Queries nutzen den Index (O(log n) statt Scan). WAL erzeugt `-wal`/`-shm`-Begleitdateien neben der DB (bereits in `.gitignore`); Backups müssen die DB per `VACUUM INTO` oder nach einem Checkpoint sichern, nicht per rohem Datei-Copy während des Betriebs.
+
+## 014 - Stückzahl (quantity) statt Item-Duplikate
+
+- Status: umgesetzt
+- Kontext: Mehrere Exemplare desselben Items (typisch: Kisten-Investments) mussten als einzelne Zeilen angelegt werden — verfälschte Portfolio-Summen oder n-fache Steam-Requests für identische Preise.
+- Entscheidung: `quantity INTEGER NOT NULL DEFAULT 1` auf `items`. Kaufpreis wird als Durchschnittspreis pro Stück interpretiert. Alle Preisanzeigen (Card, Detail, Chart) bleiben pro Stück; Portfolio-Summen, Snapshots und Telegram-Summary rechnen Preis × Stückzahl. Alerts bleiben pro Stück.
+- Konsequenz: Ein Steam-Request pro Item unabhängig von der Menge. Bestehende Items bekommen automatisch `quantity=1` — keine Verhaltensänderung ohne Zutun.

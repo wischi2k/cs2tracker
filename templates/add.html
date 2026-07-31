@@ -52,6 +52,12 @@
       <label class="block text-sm mb-1">Kaufpreis (optional, EUR)</label>
       <input name="buy_eur" value="{{ it.buy_eur or '' }}" inputmode="decimal"
              placeholder="z. B. 6,50" class="input w-full">
+      <p class="text-xs text-slate-400 mt-1">Bei Stückzahl &gt; 1: durchschnittlicher Kaufpreis pro Stück.</p>
+    </div>
+
+    <div>
+      <label class="block text-sm mb-1">Stückzahl</label>
+      <input name="quantity" value="1" inputmode="numeric" class="input w-32">
     </div>
 
     <div class="flex items-center gap-2">

@@ -76,6 +76,7 @@ class ItemService:
             net=self._eur(net_c),
             diff_g=None if buy_c is None or cur_c is None else self._eur(cur_c - buy_c),
             diff_n=None if buy_c is None or cur_c is None else self._eur(net_c - buy_c),
+            qty=max(1, int(row.get("quantity") or 1)),
         )
 
     def list_items(self, selected_category: str) -> tuple[list[dict], list[str]]:
@@ -100,6 +101,16 @@ class ItemService:
             "buy": buy_eur,
         }
 
+    @staticmethod
+    def parse_qty(qty_raw: str) -> int | None:
+        raw = (qty_raw or "").strip()
+        if not raw:
+            return None
+        try:
+            return max(1, int(raw))
+        except ValueError:
+            return None
+
     def parse_buy_to_cents(self, buy_raw: str) -> int | None:
         raw = (buy_raw or "").strip().replace(",", ".")
         if not raw:
@@ -115,6 +126,7 @@ class ItemService:
         name_input: str,
         buy_input: str,
         item_type: str = "inventory",
+        qty_input: str = "",
     ) -> tuple[int | None, str | None, dict]:
         mh = self.steam.parse_market_hash_from_url(steam_url)
         if not mh:
@@ -129,7 +141,8 @@ class ItemService:
             disp = name_input.strip()
         buy_cents = self.parse_buy_to_cents(buy_input) if item_type == "inventory" else None
 
-        new_id = self.repo.insert_item(disp, mh, buy_cents, icon, cat, item_type=item_type)
+        quantity = self.parse_qty(qty_input) or 1
+        new_id = self.repo.insert_item(disp, mh, buy_cents, icon, cat, item_type=item_type, quantity=quantity)
         current = self.steam.fetch_price_cents(mh)
         if current is not None:
             self.repo.insert_price_snapshot(new_id, current)
@@ -144,6 +157,7 @@ class ItemService:
         category_in: str | None,
         icon_input: str | None,
         item_type_in: str | None = None,
+        qty_input: str = "",
     ) -> bool:
         row = self.repo.get_item_with_latest_price(item_id)
         if row is None:
@@ -172,7 +186,11 @@ class ItemService:
             icon_url = icon_input.strip()
 
         buy_cents = self.parse_buy_to_cents(buy_input)
-        self.repo.update_item(item_id, display_name, market_hash, buy_cents, category, icon_url, item_type=item_type)
+        quantity = self.parse_qty(qty_input)
+        self.repo.update_item(
+            item_id, display_name, market_hash, buy_cents, category, icon_url,
+            item_type=item_type, quantity=quantity,
+        )
         return True
 
     def promote_to_inventory(self, item_id: int, buy_input: str) -> bool:

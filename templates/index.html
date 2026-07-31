@@ -6,7 +6,7 @@
 <div class="portfolio-summary mb-3">
   <div class="portfolio-summary__item">
     <span class="portfolio-summary__label">Inventar</span>
-    <span class="portfolio-summary__value">{{ portfolio.count }}</span>
+    <span class="portfolio-summary__value">{{ portfolio.count }}{% if portfolio.total_qty and portfolio.total_qty != portfolio.count %} <span class="text-xs text-slate-400 font-normal">({{ portfolio.total_qty }} Stk.)</span>{% endif %}</span>
   </div>
   <div class="portfolio-summary__sep"></div>
   <div class="portfolio-summary__item">
