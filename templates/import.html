@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto space-y-4">
+  <div class="card p-5">
+    <h2 class="text-lg font-semibold mb-1">Steam-Inventar importieren</h2>
+    <p class="text-sm text-slate-400 mb-4">
+      SteamID64, Profil-URL oder Vanity-Namen eingeben. Das Inventar muss in den
+      Steam-Privatsphäre-Einstellungen auf <b>Öffentlich</b> stehen.
+      Diese Seite ist gleichzeitig der Abgleich: Haken an = Item wird getrackt,
+      Haken weg = Item wird deaktiviert (Historie bleibt erhalten).
+    </p>
+
+    <form method="post" action="{{ url_for('import_preview') }}" class="flex items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input name="steam_input" value="{{ steam_input or '' }}"
+             placeholder="z. B. 76561198… oder https://steamcommunity.com/id/name"
+             class="input flex-1 text-sm" />
+      <button class="btn btn-amber">Inventar laden</button>
+    </form>
+
+    {% if error %}
+      <div class="flash flash-error mt-3">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  {% if preview %}
+  <form method="post" action="{{ url_for('import_apply') }}" class="card p-5 space-y-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="row_count" value="{{ preview['items']|length }}">
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-semibold">{{ preview['items']|length }} marktfähige Items gefunden</h3>
+        <div class="text-xs text-slate-400">SteamID: {{ preview.steam_id }}</div>
+      </div>
+      <div class="flex gap-2 text-xs">
+        <button type="button" class="btn btn-slate btn-sm" onclick="setAll(true)">Alle an</button>
+        <button type="button" class="btn btn-slate btn-sm" onclick="setAll(false)">Alle aus</button>
+      </div>
+    </div>
+
+    <div class="max-h-[28rem] overflow-y-auto divide-y divide-white/5 rounded-lg border border-white/10">
+      {% for item in preview['items'] %}
+      <label class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-white/5">
+        <input type="checkbox" name="sel_{{ loop.index0 }}" class="import-check accent-amber-500"
+               {{ 'checked' if (item.tracked and item.active) or not item.tracked else '' }}>
+        <input type="hidden" name="mh_{{ loop.index0 }}" value="{{ item.market_hash }}">
+        <input type="hidden" name="name_{{ loop.index0 }}" value="{{ item.name }}">
+        <input type="hidden" name="icon_{{ loop.index0 }}" value="{{ item.icon or '' }}">
+        <input type="hidden" name="cat_{{ loop.index0 }}" value="{{ item.category or '' }}">
+        <input type="hidden" name="qty_{{ loop.index0 }}" value="{{ item.qty }}">
+
+        {% if item.icon %}
+          <img src="{{ item.icon }}" alt="" class="item-icon">
+        {% else %}
+          <div class="h-11 w-11 rounded-md bg-slate-700/70"></div>
+        {% endif %}
+
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-sm font-medium">{{ item.name }}</div>
+          <div class="text-xs text-slate-400">{{ item.category or 'Unbekannt' }}</div>
+        </div>
+
+        {% if item.qty > 1 %}
+          <span class="rounded-full bg-slate-700/70 px-2 py-0.5 text-xs font-semibold">×{{ item.qty }}</span>
+        {% endif %}
+
+        {% if item.tracked and item.active %}
+          <span class="rounded-full bg-emerald-700/60 px-2 py-0.5 text-[10px] font-medium">getrackt</span>
+        {% elif item.tracked %}
+          <span class="rounded-full bg-rose-700/60 px-2 py-0.5 text-[10px] font-medium">deaktiviert</span>
+        {% else %}
+          <span class="rounded-full bg-slate-600/60 px-2 py-0.5 text-[10px] font-medium">neu</span>
+        {% endif %}
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="flex items-center justify-between">
+      <div class="text-xs text-slate-400">
+        Neue Items starten ohne Kaufpreis — den trägst du später per „Bearbeiten" nach.
+        Preise werden nach dem Übernehmen im Hintergrund geladen.
+      </div>
+      <button class="btn btn-amber">Auswahl übernehmen</button>
+    </div>
+  </form>
+
+  <script>
+    function setAll(state) {
+      document.querySelectorAll('.import-check').forEach(function (el) { el.checked = state; });
+    }
+  </script>
+  {% endif %}
+</div>
+
+{% endblock %}

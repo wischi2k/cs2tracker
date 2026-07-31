@@ -32,7 +32,7 @@ Es gibt Preisverläufe pro Item, aber keinen Gesamtwert-Verlauf — das Herzstü
 
 ## Stufe 2 — Komfort & Datenqualität
 
-### 2.4 Steam-Inventar-Import
+### 2.4 Steam-Inventar-Import — ✅ umgesetzt (2026-07-31, inkl. Checkbox-Abgleich)
 
 Killer-Feature aller kommerziellen Tools: SteamID64 eingeben, Inventar wird eingelesen (`steamcommunity.com/inventory/<id>/730/2`, bei öffentlichem Inventar ohne Login). Vorschau mit Checkboxen → ausgewählte Items als Portfolio-Items anlegen (Kaufpreise manuell nachtragen). Achtung: Endpoint ist aggressiv rate-limitiert → mit Delay und Cache arbeiten. Aufwand: 2–3 Abende.
 

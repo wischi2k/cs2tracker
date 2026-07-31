@@ -45,6 +45,9 @@ def register_setup_routes(app, setup_service: SetupService, telegram: TelegramCl
             "settings_general",
             "settings_telegram",
             "settings_summary_send_now",
+            "import_inventory",
+            "import_preview",
+            "import_apply",
         }
         if endpoint in protected and not setup_service.client_is_local_or_private(request):
             abort(403, description="Setup/Settings are only available from local or private network addresses.")

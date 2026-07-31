@@ -5,6 +5,8 @@ import json
 import re
 from urllib.parse import quote, unquote
 
+import time as _time
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -182,3 +184,91 @@ class SteamClient:
             return (name, icon, cat)
         except Exception:
             return (market_hash, None, None)
+
+    def resolve_steam_id(self, raw_input: str) -> str | None:
+        """Akzeptiert SteamID64, Profil-URL (/profiles/... oder /id/...) oder Vanity-Namen."""
+        raw = (raw_input or "").strip()
+        if not raw:
+            return None
+        if re.fullmatch(r"7656119\d{10}", raw):
+            return raw
+        m = re.search(r"steamcommunity\.com/profiles/(7656119\d{10})", raw)
+        if m:
+            return m.group(1)
+        m = re.search(r"steamcommunity\.com/id/([^/?#]+)", raw)
+        vanity = m.group(1) if m else raw
+        if not re.fullmatch(r"[A-Za-z0-9_-]{2,64}", vanity):
+            return None
+        try:
+            page = self._session.get(
+                f"https://steamcommunity.com/id/{quote(vanity)}", timeout=10
+            ).text
+            m = re.search(r'"steamid"\s*:\s*"(7656119\d{10})"', page)
+            return m.group(1) if m else None
+        except Exception:
+            return None
+
+    def fetch_inventory(self, steam_id64: str) -> tuple[list[dict] | None, str | None]:
+        """CS2-Inventar (app 730, context 2) laden. Liefert (Items, Fehlertext).
+
+        Items sind pro market_hash aggregiert: {market_hash, name, icon, category, qty}.
+        Nur marketable Items (nur die haben einen Steam-Market-Preis).
+        """
+        base = f"https://steamcommunity.com/inventory/{steam_id64}/730/2"
+        aggregated: dict[str, dict] = {}
+        last_assetid: str | None = None
+        for _page in range(10):
+            url = f"{base}?l=german&count=2000"
+            if last_assetid:
+                url += f"&start_assetid={last_assetid}"
+            try:
+                resp = self._session.get(url, timeout=20)
+            except Exception:
+                return None, "Steam ist gerade nicht erreichbar. Bitte spaeter erneut versuchen."
+            if resp.status_code == 403:
+                return None, "Das Inventar ist privat. Bitte in den Steam-Privatsphaere-Einstellungen auf 'Oeffentlich' stellen."
+            if resp.status_code == 429:
+                return None, "Steam-Rate-Limit erreicht (429). Bitte ein paar Minuten warten."
+            try:
+                data = resp.json()
+            except Exception:
+                data = None
+            if not isinstance(data, dict) or not data.get("success"):
+                return None, "Inventar konnte nicht geladen werden (unerwartete Steam-Antwort)."
+
+            descriptions = {
+                f"{d.get('classid')}_{d.get('instanceid')}": d
+                for d in (data.get("descriptions") or [])
+            }
+            for asset in data.get("assets") or []:
+                key = f"{asset.get('classid')}_{asset.get('instanceid')}"
+                desc = descriptions.get(key)
+                if not desc or int(desc.get("marketable") or 0) != 1:
+                    continue
+                mh = (desc.get("market_hash_name") or "").strip()
+                if not mh:
+                    continue
+                entry = aggregated.get(mh)
+                if entry is None:
+                    aggregated[mh] = {
+                        "market_hash": mh,
+                        "name": (desc.get("name") or mh).strip(),
+                        "icon": self._resolve_icon_url(desc.get("icon_url") or desc.get("icon_url_large")),
+                        "category": self._normalize_category(desc.get("type") or ""),
+                        "qty": 1,
+                    }
+                else:
+                    entry["qty"] += 1
+
+            if data.get("more_items"):
+                last_assetid = str(data.get("last_assetid") or "")
+                if not last_assetid:
+                    break
+                _time.sleep(3)
+                continue
+            break
+
+        items = sorted(aggregated.values(), key=lambda x: x["name"].casefold())
+        if not items:
+            return None, "Keine marktfaehigen CS2-Items im Inventar gefunden."
+        return items, None

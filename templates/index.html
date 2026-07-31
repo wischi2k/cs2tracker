@@ -129,10 +129,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
         <div>
-          <div class="text-sm font-medium text-slate-300">Kein Item ausgewählt</div>
-          <div class="text-xs text-slate-400 mt-1">Wähle links einen Skin aus oder füge einen neuen hinzu.</div>
+          <div class="text-sm font-medium text-slate-300">Noch keine Items</div>
+          <div class="text-xs text-slate-400 mt-1">Füge einen Skin hinzu oder importiere dein Steam-Inventar.</div>
         </div>
-        <a href="{{ url_for('add') }}" class="btn btn-amber btn-sm mt-1">+ Item hinzufügen</a>
+        <div class="flex gap-2 mt-1">
+          <a href="{{ url_for('add') }}" class="btn btn-amber btn-sm">+ Item hinzufügen</a>
+          <a href="{{ url_for('import_inventory') }}" class="btn btn-slate btn-sm">Steam-Inventar importieren</a>
+        </div>
       </div>
     {% endif %}
   </main>

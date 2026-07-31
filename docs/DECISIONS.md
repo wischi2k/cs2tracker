@@ -104,3 +104,10 @@
 - Kontext: Es gab Preisverläufe pro Item, aber keinen Gesamtwert-Verlauf. Nachträgliche Berechnung aus `prices` wäre bei jedem Dashboard-Aufruf teuer und würde historische Bestandsänderungen (Item hinzugefügt/entfernt) falsch abbilden.
 - Entscheidung: Tabelle `portfolio_snapshots(ts, total_gross_cents, total_net_cents, total_buy_cents, item_count)`. Der Scheduler schreibt nach jedem erfolgreichen Preislauf einen qty-gewichteten Snapshot über aktive Inventar-Items (Tracking-Items zählen nicht). Dashboard rendert die Zeitreihe mit Zeitraum-Schaltern (7T/30T/90T/Alles) clientseitig gefiltert.
 - Konsequenz: Ein Snapshot pro Preislauf (bei 30-Min-Intervall ~48 Zeilen/Tag — vernachlässigbar). Die Kurve beginnt ab Einführung; keine Rückrechnung.
+
+## 016 - Steam-Inventar-Import als idempotenter Abgleich
+
+- Status: umgesetzt
+- Kontext: Items einzeln per Market-URL anzulegen ist der größte Reibungspunkt beim Onboarding. Zusätzlich gewünscht: konfigurierbar, welche Inventar-Items getrackt werden.
+- Entscheidung: `/import` lädt das öffentliche CS2-Inventar (SteamID64, Profil-URL oder Vanity-Name; Endpoint `steamcommunity.com/inventory/<id>/730/2`, nur marketable Items, aggregiert nach `market_hash_name`). Die Seite ist ein Abgleich, kein Einmal-Import: Checkbox an = tracken (neu anlegen oder reaktivieren), Checkbox aus = deaktivieren (`is_active=0`, Historie bleibt). Stückzahlen werden auf den Inventar-Stand aktualisiert. Neue Items starten ohne Kaufpreis; Preise lädt der Scheduler im Hintergrund (Trigger: `auto_refresh_last_run_ts=0`).
+- Konsequenz: Wiederholbarer Abgleich statt Duplikate; kein Löschen von Historie über den Import. Privates Inventar oder Steam-429 wird mit verständlicher Fehlermeldung abgefangen. Import-Endpunkte sind wie Setup/Settings auf lokale/private Netze beschränkt.

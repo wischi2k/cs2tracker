@@ -5,6 +5,7 @@ Portfolio-Tracker für CS2 (Counter-Strike 2) Market-Items. Preise werden automa
 ## Features
 
 - **Item-Verwaltung** — Items per Steam-Market-URL hinzufügen, Kaufpreis hinterlegen, Kategorie setzen
+- **Steam-Inventar-Import** — SteamID/Profil-URL eingeben, Inventar-Items per Checkbox auswählen; wiederholbarer Abgleich (abgewählte Items werden deaktiviert, Historie bleibt)
 - **Stückzahlen** — mehrere Exemplare als ein Item mit Menge (Kaufpreis = Ø pro Stück); Portfolio-Summen rechnen Preis × Stückzahl
 - **Automatische Preisupdates** — interner Scheduler mit konfigurierbarem Intervall (5–1440 Min.)
 - **Preishistorie & Chart** — Verlauf pro Item als Zeitreihe (Chart.js)
@@ -98,12 +99,14 @@ app/
     config_repository.py  Konfiguration & Secrets (SQLite)
     item_repository.py    Items, Preise, Alerts (SQLite)
   services/
+    import_service.py     Steam-Inventar-Abgleich (Import/Aktivierung)
     item_service.py       Item-Logik, Preisberechnung
     price_scheduler_service.py  Auto-Refresh & Summary-Scheduler
     setup_service.py      Setup-Wizard, Theme-Verwaltung
     summary_service.py    Portfolio-Zusammenfassung, Portfolio-Snapshots
   web/
     routes_health.py      GET /health
+    routes_import.py      Steam-Inventar-Import
     routes_items.py       Item-CRUD, Alerts, Refresh
     routes_setup.py       Setup, Settings, Context Processor
 run.py                    Einstiegspunkt

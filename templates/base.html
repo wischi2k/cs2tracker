@@ -25,6 +25,7 @@
       <div class="flex items-center gap-2">
         <a href="{{ url_for('index') }}" class="nav-link{{ ' nav-active' if request.endpoint == 'index' else '' }}">Home</a>
         {% if setup_completed_global %}
+          <a href="{{ url_for('import_inventory') }}" class="nav-link{{ ' nav-active' if request.endpoint in ('import_inventory', 'import_preview') else '' }}">Import</a>
           <a href="{{ url_for('settings') }}" class="nav-link{{ ' nav-active' if request.endpoint in ('settings', 'settings_general', 'settings_telegram', 'settings_summary_send_now') else '' }}">Settings</a>
         {% else %}
           <a href="{{ url_for('setup') }}" class="nav-link nav-active">Setup</a>

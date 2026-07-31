@@ -508,3 +508,36 @@ class ItemRepository:
             return [dict(r) for r in rows]
         finally:
             con.close()
+
+    def get_items_by_market_hash(self) -> dict[str, dict[str, Any]]:
+        """Map market_hash -> Item-Basisdaten; fuer den Inventar-Abgleich."""
+        con = get_connection()
+        try:
+            rows = con.execute(
+                """
+                SELECT id, market_hash, display_name,
+                       IFNULL(is_active,1) AS is_active,
+                       IFNULL(item_type,'inventory') AS item_type,
+                       IFNULL(quantity,1) AS quantity
+                FROM items
+                """
+            ).fetchall()
+            return {str(r["market_hash"]): dict(r) for r in rows}
+        finally:
+            con.close()
+
+    def set_item_active(self, item_id: int, active: bool) -> None:
+        con = get_connection()
+        try:
+            con.execute("UPDATE items SET is_active=? WHERE id=?", (1 if active else 0, item_id))
+            con.commit()
+        finally:
+            con.close()
+
+    def set_item_quantity(self, item_id: int, quantity: int) -> None:
+        con = get_connection()
+        try:
+            con.execute("UPDATE items SET quantity=? WHERE id=?", (max(1, int(quantity)), item_id))
+            con.commit()
+        finally:
+            con.close()
