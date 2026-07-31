@@ -210,7 +210,6 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
 
     app.add_url_rule("/add", endpoint="add", view_func=add_get, methods=["GET"])
     app.add_url_rule("/add", endpoint="add_post", view_func=add_post, methods=["POST"])
-    app.add_url_rule("/add-item", endpoint="add_item", view_func=add_post, methods=["POST"])
 
     app.add_url_rule("/item/<int:item_id>/edit", endpoint="edit_item_get", view_func=edit_item_get, methods=["GET"])
     app.add_url_rule("/item/<int:item_id>/edit", endpoint="update_item", view_func=update_item, methods=["POST"])
