@@ -8,6 +8,7 @@ Portfolio-Tracker für CS2 (Counter-Strike 2) Market-Items. Preise werden automa
 - **Stückzahlen** — mehrere Exemplare als ein Item mit Menge (Kaufpreis = Ø pro Stück); Portfolio-Summen rechnen Preis × Stückzahl
 - **Automatische Preisupdates** — interner Scheduler mit konfigurierbarem Intervall (5–1440 Min.)
 - **Preishistorie & Chart** — Verlauf pro Item als Zeitreihe (Chart.js)
+- **Portfolio-Verlaufschart** — Gesamtwert über Zeit auf dem Dashboard (Snapshot nach jedem Preislauf), Zeiträume 7T/30T/90T/Alles
 - **Portfolio-Übersicht** — KPI-Streifen mit Gesamtwert (Brutto/Netto) und Gesamt-Δ auf dem Dashboard
 - **Gewinn/Verlust-Anzeige** — Brutto und Netto (Steam-Gebühr 15 %) mit farbigem Glow; Δ Netto als Hauptsignal in Item-Cards und Detail-Panel
 - **Detail-Panel mit KPI-Cards** — Kennzahlen (Kaufpreis, Brutto, Netto, Δ Netto) übersichtlich als einzelne Kacheln
@@ -100,7 +101,7 @@ app/
     item_service.py       Item-Logik, Preisberechnung
     price_scheduler_service.py  Auto-Refresh & Summary-Scheduler
     setup_service.py      Setup-Wizard, Theme-Verwaltung
-    summary_service.py    Portfolio-Zusammenfassung
+    summary_service.py    Portfolio-Zusammenfassung, Portfolio-Snapshots
   web/
     routes_health.py      GET /health
     routes_items.py       Item-CRUD, Alerts, Refresh

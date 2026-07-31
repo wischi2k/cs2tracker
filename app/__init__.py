@@ -43,7 +43,7 @@ def create_app() -> Flask:
     setup_service.ensure_default_config()
 
     register_health_routes(app, setup_service=setup_service)
-    register_item_routes(app, service=service, repo=repo, telegram=telegram)
+    register_item_routes(app, service=service, repo=repo, telegram=telegram, summary_service=summary_service)
     register_setup_routes(app, setup_service=setup_service, telegram=telegram)
 
     should_start_scheduler = (not app.config["DEBUG"]) or os.getenv("WERKZEUG_RUN_MAIN") == "true"

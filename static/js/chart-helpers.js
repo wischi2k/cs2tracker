@@ -1,6 +1,7 @@
 // static/js/chart-helpers.js
 (function () {
   let _chart = null;
+  let _portfolioChart = null;
 
   function eurTick(v) {
     const n = Number(v);
@@ -116,5 +117,98 @@
       },
       plugins: [triggeredAtPlugin],
     });
+  };
+
+  window.renderPortfolioChart = function renderPortfolioChart(canvasId, rangeButtonsId, d) {
+    const el = document.getElementById(canvasId);
+    if (!el) return;
+
+    const ts = Array.isArray(d?.ts) ? d.ts : [];
+    const net = Array.isArray(d?.net) ? d.net : [];
+    const buy = Array.isArray(d?.buy) ? d.buy : [];
+    const allPoints = ts.map((t, i) => ({
+      x: t * 1000,
+      net: net[i],
+      buy: buy[i],
+    }));
+
+    function draw(rangeDays) {
+      const cutoff = rangeDays > 0 ? Date.now() - rangeDays * 86400000 : 0;
+      const pts = allPoints.filter((p) => p.x >= cutoff && Number.isFinite(p.net));
+      const netPoints = pts.map((p) => ({ x: p.x, y: p.net }));
+      const buyPoints = pts
+        .filter((p) => Number.isFinite(p.buy))
+        .map((p) => ({ x: p.x, y: p.buy }));
+
+      if (_portfolioChart) {
+        try {
+          _portfolioChart.destroy();
+        } catch (_) {}
+        _portfolioChart = null;
+      }
+      if (!netPoints.length) return;
+
+      _portfolioChart = new Chart(el.getContext("2d"), {
+        type: "line",
+        data: {
+          datasets: [
+            {
+              label: "Gesamtwert netto (EUR)",
+              data: netPoints,
+              borderWidth: 2,
+              tension: 0.25,
+              fill: true,
+              backgroundColor: "rgba(125, 211, 252, 0.08)",
+              pointRadius: netPoints.length === 1 ? 4 : 0,
+              pointHoverRadius: 5,
+            },
+            ...(buyPoints.length
+              ? [
+                  {
+                    label: "Einsatz (Kaufpreise)",
+                    data: buyPoints,
+                    borderWidth: 1,
+                    borderDash: [6, 6],
+                    pointRadius: 0,
+                  },
+                ]
+              : []),
+          ],
+        },
+        options: {
+          parsing: false,
+          animation: false,
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { type: "time", time: { unit: "day" }, grid: { display: false } },
+            y: { ticks: { callback: eurTick }, grid: { color: "#33415540" } },
+          },
+          plugins: {
+            legend: { display: buyPoints.length > 0 },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ctx.dataset.label + ": " + Number(ctx.parsed.y).toFixed(2) + " EUR",
+              },
+            },
+          },
+        },
+      });
+    }
+
+    const buttonWrap = document.getElementById(rangeButtonsId);
+    if (buttonWrap) {
+      buttonWrap.querySelectorAll("button[data-range]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          buttonWrap
+            .querySelectorAll("button[data-range]")
+            .forEach((b) => b.classList.remove("nav-active"));
+          btn.classList.add("nav-active");
+          draw(Number(btn.dataset.range) || 0);
+        });
+      });
+    }
+
+    draw(0);
   };
 })();

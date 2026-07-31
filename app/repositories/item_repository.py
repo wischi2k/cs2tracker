@@ -57,6 +57,18 @@ class ItemRepository:
             if "quantity" not in cols:
                 con.execute("ALTER TABLE items ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1")
 
+            con.execute(
+                """
+                CREATE TABLE IF NOT EXISTS portfolio_snapshots (
+                    ts INTEGER PRIMARY KEY,
+                    total_gross_cents INTEGER NOT NULL,
+                    total_net_cents INTEGER NOT NULL,
+                    total_buy_cents INTEGER,
+                    item_count INTEGER NOT NULL
+                )
+                """
+            )
+
             alert_cols = {r["name"] for r in con.execute("PRAGMA table_info(alerts)").fetchall()}
             if "triggered_at" not in alert_cols:
                 con.execute("ALTER TABLE alerts ADD COLUMN triggered_at INTEGER")
@@ -458,5 +470,41 @@ class ItemRepository:
                 (item_id, int(time.time()), int(price_cents)),
             )
             con.commit()
+        finally:
+            con.close()
+
+    def insert_portfolio_snapshot(
+        self,
+        total_gross_cents: int,
+        total_net_cents: int,
+        total_buy_cents: int | None,
+        item_count: int,
+        ts: int | None = None,
+    ) -> None:
+        con = get_connection()
+        try:
+            con.execute(
+                """
+                INSERT OR REPLACE INTO portfolio_snapshots(ts, total_gross_cents, total_net_cents, total_buy_cents, item_count)
+                VALUES(?,?,?,?,?)
+                """,
+                (int(ts or time.time()), int(total_gross_cents), int(total_net_cents),
+                 None if total_buy_cents is None else int(total_buy_cents), int(item_count)),
+            )
+            con.commit()
+        finally:
+            con.close()
+
+    def get_portfolio_series(self) -> list[dict[str, Any]]:
+        con = get_connection()
+        try:
+            rows = con.execute(
+                """
+                SELECT ts, total_gross_cents, total_net_cents, total_buy_cents, item_count
+                FROM portfolio_snapshots
+                ORDER BY ts ASC
+                """
+            ).fetchall()
+            return [dict(r) for r in rows]
         finally:
             con.close()

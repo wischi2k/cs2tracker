@@ -10,7 +10,7 @@ from app.repositories.item_repository import ItemRepository
 from app.services.item_service import CATEGORIES, ItemService
 
 
-def register_item_routes(app, service: ItemService, repo: ItemRepository, telegram: TelegramClient) -> None:
+def register_item_routes(app, service: ItemService, repo: ItemRepository, telegram: TelegramClient, summary_service=None) -> None:
     def _redirect_index(cat: str | None = None):
         kwargs = {"cat": cat} if cat else {}
         return redirect(url_for("index", **kwargs))
@@ -45,6 +45,7 @@ def register_item_routes(app, service: ItemService, repo: ItemRepository, telegr
             tracking_items=tracking_items,
             selected=None,
             portfolio=_portfolio_summary(items),
+            portfolio_chart=summary_service.get_portfolio_chart_payload(),
             now_ts=int(time.time()),
         )
 

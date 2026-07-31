@@ -97,3 +97,10 @@
 - Kontext: Mehrere Exemplare desselben Items (typisch: Kisten-Investments) mussten als einzelne Zeilen angelegt werden — verfälschte Portfolio-Summen oder n-fache Steam-Requests für identische Preise.
 - Entscheidung: `quantity INTEGER NOT NULL DEFAULT 1` auf `items`. Kaufpreis wird als Durchschnittspreis pro Stück interpretiert. Alle Preisanzeigen (Card, Detail, Chart) bleiben pro Stück; Portfolio-Summen, Snapshots und Telegram-Summary rechnen Preis × Stückzahl. Alerts bleiben pro Stück.
 - Konsequenz: Ein Steam-Request pro Item unabhängig von der Menge. Bestehende Items bekommen automatisch `quantity=1` — keine Verhaltensänderung ohne Zutun.
+
+## 015 - Portfolio-Snapshots als eigene Zeitreihe
+
+- Status: umgesetzt
+- Kontext: Es gab Preisverläufe pro Item, aber keinen Gesamtwert-Verlauf. Nachträgliche Berechnung aus `prices` wäre bei jedem Dashboard-Aufruf teuer und würde historische Bestandsänderungen (Item hinzugefügt/entfernt) falsch abbilden.
+- Entscheidung: Tabelle `portfolio_snapshots(ts, total_gross_cents, total_net_cents, total_buy_cents, item_count)`. Der Scheduler schreibt nach jedem erfolgreichen Preislauf einen qty-gewichteten Snapshot über aktive Inventar-Items (Tracking-Items zählen nicht). Dashboard rendert die Zeitreihe mit Zeitraum-Schaltern (7T/30T/90T/Alles) clientseitig gefiltert.
+- Konsequenz: Ein Snapshot pro Preislauf (bei 30-Min-Intervall ~48 Zeilen/Tag — vernachlässigbar). Die Kurve beginnt ab Einführung; keine Rückrechnung.

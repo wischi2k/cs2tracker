@@ -82,6 +82,47 @@
       {% set alert_th = selected.alert_th %}
       {% set alert_above = selected.alert_above %}
       {% include 'detail_fragment.html' %}
+    {% elif portfolio and portfolio.count > 0 %}
+      {# Dashboard-Ansicht: Portfolio-Verlauf #}
+      <div class="chart-wrap p-4">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <div class="text-sm font-semibold">Portfolio-Verlauf</div>
+            <div class="text-xs text-slate-400">Gesamtwert netto (nach 15 % Fee), stückzahl-gewichtet</div>
+          </div>
+          <div class="flex gap-1" id="portfolioRangeButtons">
+            <button type="button" class="btn btn-slate btn-sm" data-range="7">7T</button>
+            <button type="button" class="btn btn-slate btn-sm" data-range="30">30T</button>
+            <button type="button" class="btn btn-slate btn-sm" data-range="90">90T</button>
+            <button type="button" class="btn btn-slate btn-sm nav-active" data-range="0">Alles</button>
+          </div>
+        </div>
+        <div class="relative h-80">
+          <canvas id="portfolioChart"></canvas>
+        </div>
+        <div class="mt-2 text-xs text-slate-400" id="portfolioChartHint">
+          {% if not portfolio_chart or portfolio_chart.ts|length == 0 %}
+            Noch keine Verlaufsdaten — der erste Datenpunkt entsteht beim nächsten automatischen Preislauf.
+          {% elif portfolio_chart.ts|length < 2 %}
+            Erster Datenpunkt erfasst — die Kurve entsteht ab dem zweiten Preislauf.
+          {% else %}
+            Datenpunkte: {{ portfolio_chart.ts|length }}
+          {% endif %}
+        </div>
+      </div>
+
+      {% if portfolio_chart and portfolio_chart.ts|length > 0 %}
+      <script>
+      (function bootPortfolio() {
+        const payload = {{ portfolio_chart|tojson|safe }};
+        if (window.renderPortfolioChart) {
+          window.renderPortfolioChart('portfolioChart', 'portfolioRangeButtons', payload);
+        } else {
+          setTimeout(bootPortfolio, 50);
+        }
+      })();
+      </script>
+      {% endif %}
     {% else %}
       <div class="card flex flex-col items-center justify-center gap-3 py-12 text-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-25" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">

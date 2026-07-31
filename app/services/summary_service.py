@@ -138,3 +138,52 @@ class SummaryService:
         lines.append(f"<i>Inventar: {len(inventory_items)} Items · Beobachtungsliste: {len(tracking_items)} Items</i>")
 
         return SummaryPayload(text_html="\n".join(lines), considered_items=considered_items)
+
+    def compute_portfolio_totals(self) -> dict[str, int | None]:
+        """Aktuelle qty-gewichtete Portfolio-Summen (Cent) ueber aktive Inventar-Items."""
+        rows = self.repo.list_active_items_basic()
+        total_gross = 0
+        total_net = 0
+        total_buy = 0
+        have_buy = False
+        count = 0
+        for row in rows:
+            if (row.get("item_type") or "inventory") != "inventory":
+                continue
+            item_id = int(row["id"])
+            qty = max(1, int(row.get("quantity") or 1))
+            latest = self.repo.get_latest_price_cents(item_id)
+            if latest is not None:
+                total_gross += latest * qty
+                total_net += int(round(latest * (1 - STEAM_FEE_RATE))) * qty
+            buy_cents = row.get("buy_price_cents")
+            if buy_cents is not None:
+                total_buy += int(buy_cents) * qty
+                have_buy = True
+            count += 1
+        return {
+            "total_gross_cents": total_gross,
+            "total_net_cents": total_net,
+            "total_buy_cents": total_buy if have_buy else None,
+            "item_count": count,
+        }
+
+    def record_portfolio_snapshot(self) -> None:
+        totals = self.compute_portfolio_totals()
+        if not totals["item_count"]:
+            return
+        self.repo.insert_portfolio_snapshot(
+            total_gross_cents=int(totals["total_gross_cents"] or 0),
+            total_net_cents=int(totals["total_net_cents"] or 0),
+            total_buy_cents=totals["total_buy_cents"],
+            item_count=int(totals["item_count"] or 0),
+        )
+
+    def get_portfolio_chart_payload(self) -> dict:
+        rows = self.repo.get_portfolio_series()
+        return {
+            "ts": [int(r["ts"]) for r in rows],
+            "gross": [r["total_gross_cents"] / 100.0 for r in rows],
+            "net": [r["total_net_cents"] / 100.0 for r in rows],
+            "buy": [None if r["total_buy_cents"] is None else r["total_buy_cents"] / 100.0 for r in rows],
+        }

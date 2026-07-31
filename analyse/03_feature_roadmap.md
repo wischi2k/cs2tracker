@@ -22,7 +22,7 @@ Es gibt „Gekauft" (promote), aber kein „Verkauft". Löschen vernichtet die H
 - Ersetzt das gefährliche harte Löschen im Alltag
 - Aufwand: 2–3 Abende
 
-### 1.3 Portfolio-Verlaufschart
+### 1.3 Portfolio-Verlaufschart — ✅ umgesetzt (2026-07-31)
 
 Es gibt Preisverläufe pro Item, aber keinen Gesamtwert-Verlauf — das Herzstück jeder kommerziellen Portfolio-Ansicht („dein Depot über Zeit").
 
