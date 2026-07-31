@@ -13,4 +13,5 @@ def get_connection() -> sqlite3.Connection:
     con = sqlite3.connect(db_path, timeout=30)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA busy_timeout = 30000")
+    con.execute("PRAGMA journal_mode = WAL")
     return con

@@ -58,6 +58,8 @@ class ItemRepository:
             alert_cols = {r["name"] for r in con.execute("PRAGMA table_info(alerts)").fetchall()}
             if "triggered_at" not in alert_cols:
                 con.execute("ALTER TABLE alerts ADD COLUMN triggered_at INTEGER")
+
+            con.execute("CREATE INDEX IF NOT EXISTS idx_prices_item_ts ON prices(item_id, ts DESC)")
             con.commit()
         finally:
             con.close()

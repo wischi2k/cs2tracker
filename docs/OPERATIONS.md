@@ -162,6 +162,16 @@ Sichern:
 - SQLite-Datei (`CS2_DB_PATH`)
 - `.env` (falls genutzt)
 
+Hinweis WAL-Mode: Die DB laeuft im `journal_mode=WAL`. Neben der `.sqlite`-Datei existieren
+`-wal`/`-shm`-Begleitdateien; ein roher Datei-Copy waehrend des Betriebs kann die juengsten
+Schreibvorgaenge verpassen. Konsistentes Backup bei laufender App:
+
+```bash
+sqlite3 cs2_prices.sqlite "VACUUM INTO 'backup_$(date +%F).sqlite'"
+```
+
+Alternativ: Service stoppen, dann Datei kopieren.
+
 Wiederherstellung:
 
 1. Dateien zurueckspielen

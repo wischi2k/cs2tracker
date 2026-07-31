@@ -83,3 +83,10 @@
 - Kontext: Alle POST-Endpunkte (Löschen, Alerts, Settings) waren ohne CSRF-Token. Da die App per `ui_access_scope=private_network` bewusst im LAN erreichbar ist, konnte jede im Browser geöffnete Webseite state-ändernde Requests auslösen (z. B. Items löschen).
 - Entscheidung: `CSRFProtect(app)` in `create_app()` aktiviert (Flask-WTF). Alle 14 POST-Formulare in den aktiven Templates tragen ein `csrf_token`-Hidden-Field. POSTs ohne gültiges Token werden mit HTTP 400 abgelehnt.
 - Konsequenz: Eine neue Dependency (`flask-wtf`). Externe POSTs ohne Session-Token sind nicht mehr möglich; eigene Skripte gegen die App müssten das Token mitschicken oder per `csrf.exempt` freigeschaltet werden.
+
+## 013 - Index auf prices(item_id, ts) + WAL-Journal-Mode
+
+- Status: umgesetzt
+- Kontext: Die `prices`-Tabelle wächst mit jedem Scheduler-Lauf (Snapshots pro Item). Die korrelierte Subquery „letzter Preis pro Item" sowie Chart- und Summary-Abfragen mussten ohne Index die gesamte Historie scannen — mit wachsender Laufzeit über Monate spürbar. Zusätzlich konkurrieren Scheduler-Thread und Web-Requests um dieselbe SQLite-Datei.
+- Entscheidung: `CREATE INDEX IF NOT EXISTS idx_prices_item_ts ON prices(item_id, ts DESC)` in `ensure_schema()` (greift automatisch beim nächsten Start, auch für Bestands-DBs). `PRAGMA journal_mode=WAL` in `get_connection()` für bessere Lese-/Schreib-Parallelität und weniger `database is locked`-Risiko.
+- Konsequenz: Latest-Price-, Chart- und Summary-Queries nutzen den Index (O(log n) statt Scan). WAL erzeugt `-wal`/`-shm`-Begleitdateien neben der DB (bereits in `.gitignore`); Backups müssen die DB per `VACUUM INTO` oder nach einem Checkpoint sichern, nicht per rohem Datei-Copy während des Betriebs.
