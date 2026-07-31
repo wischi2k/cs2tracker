@@ -104,9 +104,11 @@ class SteamClient:
         )
         try:
             resp = self._session.get(url, timeout=15)
+            if resp.status_code == 429:
+                return None
             txt = resp.text.lstrip("\ufeff")
             data = json.loads(txt)
-            if not data.get("success"):
+            if not isinstance(data, dict) or not data.get("success"):
                 return None
             price_str = data.get("lowest_price") or data.get("median_price") or ""
             return self.parse_eur_to_cents(price_str)

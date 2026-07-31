@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import html
+import time
 from dataclasses import asdict
 
 from app.domain.models import ItemView
@@ -227,6 +228,7 @@ class ItemService:
         rows = self.repo.list_items_with_latest_price()
         updated = 0
         skipped = 0
+        first = True
         for row in rows:
             if int(row.get("is_active") or 1) != 1:
                 continue
@@ -235,6 +237,9 @@ class ItemService:
             if not mh:
                 skipped += 1
                 continue
+            if not first:
+                time.sleep(3)
+            first = False
             cents = self.steam.fetch_price_cents(mh)
             if cents is None:
                 skipped += 1
