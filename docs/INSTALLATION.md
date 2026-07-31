@@ -300,7 +300,7 @@ python3 -m ensurepip --upgrade
 
 ### Steam-Preis kann nicht abgerufen werden
 
-Steam hat gelegentlich Rate-Limits. Warte ein paar Minuten und klicke auf **„Preis aktualisieren"** in der Detailansicht des Items.
+Steam begrenzt die Anzahl der API-Anfragen (Rate-Limiting, HTTP 429). Der Scheduler wartet daher 3 Sekunden zwischen jedem Item-Refresh, sodass ein Bulk-Update bei vielen Items etwas laenger dauern kann. Einzelne Items koennen ueber **„Preis aktualisieren"** in der Detailansicht manuell aktualisiert werden.
 
 ---
 

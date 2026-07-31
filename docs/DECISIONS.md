@@ -63,6 +63,13 @@
 - Entscheidung: Alert feuert einmalig. `threshold_net_eur` wird auf NULL gesetzt, `triggered_at` bleibt erhalten.
 - Konsequenz: Kein Spam. Auslösezeitpunkt ist im Chart als vertikale Linie sichtbar.
 
+## 011 - 3-Sekunden-Delay zwischen Steam-API-Requests
+
+- Status: umgesetzt
+- Kontext: Steam hat das Rate-Limiting der `priceoverview`-API verschaerft (HTTP 429, Body `null`). Beim Bulk-Refresh aller Items wurden Anfragen ohne Pause gesendet, was zur Folge hatte, dass fast alle Preise mit `None` zurueckkamen.
+- Entscheidung: In `refresh_all_active_prices()` wird zwischen jedem Request `time.sleep(3)` eingefuegt. Ausserdem wird HTTP 429 in `fetch_price_cents()` explizit abgefangen und `isinstance(data, dict)` geprueft, damit ein `null`-Body keine Exception mehr wirft.
+- Konsequenz: Ein Bulk-Refresh mit n Items dauert ca. n×3 Sekunden. Bei den typischen 5–30 Items (15–90 s) ist das akzeptabel, da Live-Preise keine Anforderung sind.
+
 ## 010 - Brutto vs. Netto Schwellenwert je Item-Typ
 
 - Status: umgesetzt
