@@ -74,6 +74,7 @@
     {% if it.item_type == 'tracking' %}
     <div id="promote-{{ it.id }}" class="hidden px-3 pb-3">
       <form method="post" action="{{ url_for('promote_item', item_id=it.id) }}" class="flex items-center gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="text-xs text-slate-300">Kaufpreis (€)</label>
         <input name="buy_eur" inputmode="decimal" placeholder="z. B. 6,50"
                class="input text-sm w-24" />

@@ -10,6 +10,7 @@
   <section class="bg-slate-800 rounded-xl p-4 space-y-3 border border-slate-700">
     <h3 class="font-medium">1) Grundkonfiguration</h3>
     <form method="post" action="{{ url_for('setup_general') }}" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div>
         <label class="block text-sm mb-1">Preisupdate-Intervall (Minuten)</label>
         <input type="number" min="5" max="1440" name="price_update_interval_minutes" value="{{ interval }}" class="w-full bg-slate-900 rounded px-3 py-2">
@@ -116,6 +117,7 @@
     <h3 class="font-medium">2) Telegram verbinden</h3>
     <p class="text-sm text-slate-300">Token und Chat-ID aus BotFather/Telegram eintragen. Danach wird eine Testnachricht gesendet.</p>
     <form method="post" action="{{ url_for('setup_telegram') }}" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div>
         <label class="block text-sm mb-1">Bot Token</label>
         <input type="text" name="bot_token" placeholder="123456:ABCdef..." class="w-full bg-slate-900 rounded px-3 py-2">
@@ -136,6 +138,7 @@
   <section class="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-2">
     <h3 class="font-medium">3) Setup abschliessen</h3>
     <form method="post" action="{{ url_for('setup_complete') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="px-3 py-2 rounded bg-green-700 hover:bg-green-600">Setup abschliessen</button>
     </form>
     {% if setup_completed %}

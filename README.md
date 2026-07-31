@@ -75,6 +75,7 @@ Aktivierbar in Setup/Settings. Konfigurierbar: Intervall in Tagen + Versandzeit 
 ## Sicherheit
 
 - Zugriffs-Scope konfigurierbar: `nur lokal` oder `lokales Netzwerk`
+- CSRF-Schutz auf allen Formularen (Flask-WTF); POSTs ohne gültiges Token werden abgelehnt
 - Telegram-Zugangsdaten werden verschlüsselt in SQLite (`secret_store`) abgelegt
 - Lock-Mechanismus verhindert parallele Scheduler-Läufe (SQLite `BEGIN IMMEDIATE`)
 

@@ -1,6 +1,7 @@
 import os
 
 from flask import Flask
+from flask_wtf import CSRFProtect
 
 from app.config import Config
 from app.infrastructure.steam_client import SteamClient
@@ -19,6 +20,7 @@ from app.web.routes_setup import register_setup_routes
 def create_app() -> Flask:
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
     app.config.from_object(Config)
+    CSRFProtect(app)
 
     repo = ItemRepository()
     config_repo = ConfigRepository()

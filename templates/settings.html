@@ -10,6 +10,7 @@
   <section class="bg-slate-800 rounded-xl p-4 space-y-3 border border-slate-700">
     <h3 class="font-medium">Allgemein</h3>
     <form method="post" action="{{ url_for('settings_general') }}" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div>
         <label class="block text-sm mb-1">Preisupdate-Intervall (Minuten)</label>
         <input type="number" min="5" max="1440" name="price_update_interval_minutes" value="{{ interval }}" class="input w-full">
@@ -115,6 +116,7 @@
       Status: {{ 'verbunden' if telegram_configured else 'nicht verbunden' }}
     </div>
     <form method="post" action="{{ url_for('settings_telegram') }}" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div>
         <label class="block text-sm mb-1">Bot Token</label>
         <input type="text" name="bot_token" placeholder="123456:ABCdef..." class="input w-full">
@@ -139,6 +141,7 @@
       <div class="text-sm text-red-300 break-words">Letzter Fehler: {{ summary_status.last_error }}</div>
     {% endif %}
     <form method="post" action="{{ url_for('settings_summary_send_now') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-slate mt-2">Send now (Test)</button>
     </form>
     <p class="text-xs text-slate-400">Details auch unter <code>/health</code> -> <code>summary</code>.</p>

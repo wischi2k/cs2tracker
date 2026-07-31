@@ -11,6 +11,7 @@
   {% endif %}
 
   <form method="post" class="space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div>
       <label class="block text-sm mb-2">Typ</label>

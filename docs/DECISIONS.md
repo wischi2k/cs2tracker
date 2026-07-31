@@ -76,3 +76,10 @@
 - Kontext: Beim Verkauf (Inventar) verliert man 15 % Fee — relevant ist der Netto-Preis. Beim Kauf (Tracking) zahlt man den vollen Brutto-Preis.
 - Entscheidung: Inventar-Alerts auf Netto-Preis, Tracking-Alerts auf Brutto-Preis. Standardrichtung: Inventar = Überschreitung (≥), Tracking = Unterschreitung (≤). Beides manuell anpassbar.
 - Konsequenz: Natürlichere UX — Zahlen in der App entsprechen dem was der Nutzer tatsächlich zahlt oder erhält.
+
+## 012 - CSRF-Schutz über Flask-WTF
+
+- Status: umgesetzt
+- Kontext: Alle POST-Endpunkte (Löschen, Alerts, Settings) waren ohne CSRF-Token. Da die App per `ui_access_scope=private_network` bewusst im LAN erreichbar ist, konnte jede im Browser geöffnete Webseite state-ändernde Requests auslösen (z. B. Items löschen).
+- Entscheidung: `CSRFProtect(app)` in `create_app()` aktiviert (Flask-WTF). Alle 14 POST-Formulare in den aktiven Templates tragen ein `csrf_token`-Hidden-Field. POSTs ohne gültiges Token werden mit HTTP 400 abgelehnt.
+- Konsequenz: Eine neue Dependency (`flask-wtf`). Externe POSTs ohne Session-Token sind nicht mehr möglich; eigene Skripte gegen die App müssten das Token mitschicken oder per `csrf.exempt` freigeschaltet werden.
