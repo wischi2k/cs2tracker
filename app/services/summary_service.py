@@ -25,14 +25,17 @@ class SummaryService:
         now_ts = int(time.time())
         start_ts = now_ts - int(interval_days) * 86400
 
-        items = self.repo.list_active_items_basic()
-        considered_items = len(items)
+        all_items = self.repo.list_active_items_basic()
+        considered_items = len(all_items)
+
+        inventory_items = [r for r in all_items if (r.get("item_type") or "inventory") == "inventory"]
+        tracking_items = [r for r in all_items if (r.get("item_type") or "inventory") == "tracking"]
 
         movement: list[dict] = []
         valuable: list[dict] = []
         profit_vs_buy: list[dict] = []
 
-        for row in items:
+        for row in inventory_items:
             item_id = int(row["id"])
             name = str(row.get("display_name") or f"Item #{item_id}")
 
@@ -62,15 +65,7 @@ class SummaryService:
             latest_net_for_move = self._net_eur_from_cents(latest)
             delta = latest_net_for_move - base_net
             pct = (delta / base_net) * 100.0
-            movement.append(
-                {
-                    "name": name,
-                    "base_net": base_net,
-                    "latest_net": latest_net_for_move,
-                    "delta_net": delta,
-                    "pct": pct,
-                }
-            )
+            movement.append({"name": name, "base_net": base_net, "latest_net": latest_net_for_move, "delta_net": delta, "pct": pct})
 
         gainers = sorted([m for m in movement if m["pct"] > 0], key=lambda x: x["pct"], reverse=True)[:3]
         losers = sorted([m for m in movement if m["pct"] < 0], key=lambda x: x["pct"])[:3]
@@ -78,7 +73,7 @@ class SummaryService:
         top_profit_vs_buy = sorted(profit_vs_buy, key=lambda x: x["profit_net"], reverse=True)[:3]
 
         lines: list[str] = []
-        lines.append(f"<b>Portfolio-Zusammenfassung</b> (letzte {int(interval_days)} Tage)")
+        lines.append(f"<b>📦 Portfolio-Zusammenfassung</b> (letzte {int(interval_days)} Tage)")
         lines.append("")
 
         lines.append("<b>Top 3 Gewinner (Zeitraum)</b>")
@@ -101,7 +96,7 @@ class SummaryService:
                 )
 
         lines.append("")
-        lines.append("<b>Top 3 wertvollste Items</b>")
+        lines.append("<b>Top 3 wertvollste Items (Netto)</b>")
         if top_valuable:
             for v in top_valuable:
                 lines.append(f"• <b>{v['name']}</b> {v['latest_net']:.2f} EUR")
@@ -119,8 +114,24 @@ class SummaryService:
         else:
             lines.append("• – (keine Kaufpreise hinterlegt)")
 
+        if tracking_items:
+            lines.append("")
+            lines.append("<b>👁 Beobachtungsliste</b>")
+            for row in tracking_items:
+                item_id = int(row["id"])
+                name = str(row.get("display_name") or f"Item #{item_id}")
+                latest = self.repo.get_latest_price_cents(item_id)
+                price_str = f"{latest / 100.0:.2f} EUR" if latest is not None else "kein Preis"
+                threshold = row.get("threshold_net_eur")
+                above = row.get("above_threshold")
+                if threshold is not None:
+                    direction = "≥" if above else "≤"
+                    lines.append(f"• <b>{name}</b> — {price_str} (Ziel: {direction} {float(threshold):.2f} EUR)")
+                else:
+                    lines.append(f"• <b>{name}</b> — {price_str}")
+
         lines.append("")
         lines.append(f"<i>Erstellt: {time.strftime('%Y-%m-%d %H:%M:%S')} (Serverzeit)</i>")
-        lines.append(f"<i>Aktive Items: {considered_items}</i>")
+        lines.append(f"<i>Inventar: {len(inventory_items)} Items · Beobachtungsliste: {len(tracking_items)} Items</i>")
 
         return SummaryPayload(text_html="\n".join(lines), considered_items=considered_items)

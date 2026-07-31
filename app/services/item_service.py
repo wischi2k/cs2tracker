@@ -202,13 +202,23 @@ class ItemService:
 
             if triggered:
                 item_name = row.get("display_name") or f"Item #{row['id']}"
-                direction = "≥" if above else "≤"
                 if self.telegram:
-                    self.telegram.send(
-                        f"🔔 <b>{html.escape(item_name)}</b>\n"
-                        f"Preis {direction} {threshold:.2f} EUR erreicht.\n"
-                        f"Aktuell: {cur_c / 100.0:.2f} EUR"
-                    )
+                    if item_type == "inventory":
+                        net_eur = cur_c * (1 - FEE_RATE) / 100.0
+                        direction = "≥" if above else "≤"
+                        msg = (
+                            f"🔔 <b>{html.escape(item_name)}</b>\n"
+                            f"Verkaufszeitpunkt: Netto {net_eur:.2f} EUR {direction} {threshold:.2f} EUR\n"
+                            f"Marktpreis (brutto): {cur_c / 100.0:.2f} EUR"
+                        )
+                    else:
+                        gross_eur = cur_c / 100.0
+                        direction = "≤" if not above else "≥"
+                        msg = (
+                            f"🎯 <b>{html.escape(item_name)}</b>\n"
+                            f"Kaufgelegenheit: {gross_eur:.2f} EUR {direction} {threshold:.2f} EUR"
+                        )
+                    self.telegram.send(msg)
                 self.repo.fire_alert(int(row["id"]))
 
     def refresh_item_price(self, item_id: int) -> bool:

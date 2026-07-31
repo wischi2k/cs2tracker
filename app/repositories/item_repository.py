@@ -139,10 +139,13 @@ class ItemRepository:
         try:
             rows = con.execute(
                 """
-                SELECT id, display_name, buy_price_cents, market_hash
-                FROM items
-                WHERE IFNULL(is_active,1)=1
-                ORDER BY display_name
+                SELECT i.id, i.display_name, i.buy_price_cents, i.market_hash,
+                       IFNULL(i.item_type,'inventory') AS item_type,
+                       a.threshold_net_eur, a.above_threshold
+                FROM items i
+                LEFT JOIN alerts a ON a.item_id = i.id AND a.threshold_net_eur IS NOT NULL
+                WHERE IFNULL(i.is_active,1)=1
+                ORDER BY i.display_name
                 """
             ).fetchall()
             return [dict(r) for r in rows]
