@@ -32,6 +32,15 @@ Standard:
 
 - Die App fuehrt Auto-Refresh intern aus (Intervall aus Setup/Settings).
 - Status ist ueber `/health` unter `auto_refresh` sichtbar.
+- `auto_refresh.steam_lock_until_ts` zeigt, ob gerade ein Steam-Zugriff laeuft.
+- `auto_refresh.steam_rate_limit_until_ts` zeigt, bis wann die App nach HTTP 429 keine neuen Steam-Requests startet.
+
+Steam-Rate-Limit-Verhalten:
+
+- Preisrefresh und Inventar-Import teilen sich denselben Steam-Lock.
+- Wenn Steam HTTP 429 liefert, setzt die App einen 15-Minuten-Cooldown.
+- Ein laufender Preisrefresh bricht beim ersten 429 ab, statt weitere Items abzufragen.
+- Der Inventar-Import nutzt erfolgreiche Preview-Daten 15 Minuten aus dem lokalen Cache.
 
 Manuell (Debug/Adhoc):
 
@@ -186,5 +195,5 @@ Wiederherstellung:
 ## Risiken / Grenzen
 
 - SQLite ist kein Multi-Node-DBMS.
-- Externe Steam-API kann Rate-Limits/Timeouts haben.
+- Externe Steam-API kann Rate-Limits/Timeouts haben. HTTP 429 wird als globaler Steam-Cooldown behandelt.
 - Telegram ist optional und darf keine Kernfunktion blockieren.

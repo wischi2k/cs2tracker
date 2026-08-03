@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 
 class SteamClient:
     def __init__(self) -> None:
+        self.was_rate_limited = False
         self._session = requests.Session()
         self._session.headers.update(
             {
@@ -100,6 +101,7 @@ class SteamClient:
             return None
 
     def fetch_price_cents(self, market_hash: str) -> int | None:
+        self.was_rate_limited = False
         url = (
             "https://steamcommunity.com/market/priceoverview/"
             f"?appid=730&currency=3&market_hash_name={quote(market_hash)}"
@@ -107,6 +109,7 @@ class SteamClient:
         try:
             resp = self._session.get(url, timeout=15)
             if resp.status_code == 429:
+                self.was_rate_limited = True
                 return None
             txt = resp.text.lstrip("\ufeff")
             data = json.loads(txt)
@@ -214,6 +217,7 @@ class SteamClient:
         Items sind pro market_hash aggregiert: {market_hash, name, icon, category, qty}.
         Nur marketable Items (nur die haben einen Steam-Market-Preis).
         """
+        self.was_rate_limited = False
         base = f"https://steamcommunity.com/inventory/{steam_id64}/730/2"
         aggregated: dict[str, dict] = {}
         last_assetid: str | None = None
@@ -228,6 +232,7 @@ class SteamClient:
             if resp.status_code == 403:
                 return None, "Das Inventar ist privat. Bitte in den Steam-Privatsphaere-Einstellungen auf 'Oeffentlich' stellen."
             if resp.status_code == 429:
+                self.was_rate_limited = True
                 return None, "Steam-Rate-Limit erreicht (429). Bitte ein paar Minuten warten."
             try:
                 data = resp.json()

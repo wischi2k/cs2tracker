@@ -271,6 +271,8 @@ class ItemService:
             cents = self.steam.fetch_price_cents(mh)
             if cents is None:
                 skipped += 1
+                if self.steam.was_rate_limited:
+                    break
                 continue
             self.repo.insert_price_snapshot(item_id, cents)
             updated += 1

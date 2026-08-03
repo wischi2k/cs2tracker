@@ -111,3 +111,10 @@
 - Kontext: Items einzeln per Market-URL anzulegen ist der größte Reibungspunkt beim Onboarding. Zusätzlich gewünscht: konfigurierbar, welche Inventar-Items getrackt werden.
 - Entscheidung: `/import` lädt das öffentliche CS2-Inventar (SteamID64, Profil-URL oder Vanity-Name; Endpoint `steamcommunity.com/inventory/<id>/730/2`, nur marketable Items, aggregiert nach `market_hash_name`). Die Seite ist ein Abgleich, kein Einmal-Import: Checkbox an = tracken (neu anlegen oder reaktivieren), Checkbox aus = deaktivieren (`is_active=0`, Historie bleibt). Stückzahlen werden auf den Inventar-Stand aktualisiert. Neue Items starten ohne Kaufpreis; Preise lädt der Scheduler im Hintergrund (Trigger: `auto_refresh_last_run_ts=0`).
 - Konsequenz: Wiederholbarer Abgleich statt Duplikate; kein Löschen von Historie über den Import. Privates Inventar oder Steam-429 wird mit verständlicher Fehlermeldung abgefangen. Import-Endpunkte sind wie Setup/Settings auf lokale/private Netze beschränkt.
+
+## 017 - Globaler Steam-Lock, Cooldown und Inventory-Preview-Cache
+
+- Status: umgesetzt
+- Kontext: Der Inventory-Endpoint und die Market-Preis-API werden von Steam aggressiv limitiert. Der Import selbst laedt zwar seriell, konnte aber parallel zu einem Scheduler-Preisrefresh laufen. Wiederholte Klicks auf "Inventar laden" haben nach einem 429 sofort weitere Steam-Requests ausgeloest.
+- Entscheidung: Alle groesseren Steam-Zugriffe teilen sich `steam_request_lock_until_ts` in `app_config`. Bei HTTP 429 wird `steam_rate_limit_until_ts` fuer 15 Minuten gesetzt. Der Scheduler startet waehrend des Cooldowns keinen Preisrefresh und bricht einen laufenden Refresh beim ersten 429 ab. Erfolgreiche Inventory-Previews werden 15 Minuten in `steam_inventory_preview_cache_json` gespeichert.
+- Konsequenz: Weniger konkurrierende Steam-Requests und kein lokales Nachfeuern waehrend eines Rate-Limits. Der Import kann direkt erneut angezeigt werden, solange der lokale Preview-Cache gueltig ist. Nach einem echten 429 muss der Nutzer warten, bekommt aber eine klare Restzeit statt einer generischen Fehlermeldung.

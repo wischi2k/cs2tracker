@@ -71,6 +71,8 @@ Einstellungen danach jederzeit unter `/settings` änderbar.
 
 Der interne Scheduler läuft als Daemon-Thread. Status und letzter Lauf sind unter `GET /health` → `auto_refresh` einsehbar. Optional kann zusätzlich ein systemd-Timer als Fallback eingerichtet werden (siehe `docs/OPERATIONS.md`).
 
+Steam-Zugriffe werden app-weit koordiniert: Inventar-Import und Preisrefresh teilen sich einen Steam-Lock. Bei HTTP 429 setzt die App einen 15-Minuten-Cooldown und nutzt beim Inventar-Import einen 15-Minuten-Preview-Cache, damit wiederholte Klicks nicht sofort weitere Steam-Requests ausloesen.
+
 ## Telegram-Zusammenfassung
 
 Aktivierbar in Setup/Settings. Konfigurierbar: Intervall in Tagen + Versandzeit (`HH:MM`, Serverzeit). Inhalt: Top-3-Gewinner, Top-3-Verlierer, wertvollste Items, Gewinn vs. Kaufpreis. Manueller Versand über „Send now" im Settings-Bereich möglich.
@@ -81,6 +83,7 @@ Aktivierbar in Setup/Settings. Konfigurierbar: Intervall in Tagen + Versandzeit 
 - CSRF-Schutz auf allen Formularen (Flask-WTF); POSTs ohne gültiges Token werden abgelehnt
 - Telegram-Zugangsdaten werden verschlüsselt in SQLite (`secret_store`) abgelegt
 - Lock-Mechanismus verhindert parallele Scheduler-Läufe (SQLite `BEGIN IMMEDIATE`)
+- Zusaetzlicher Steam-Lock verhindert parallele Steam-Requests aus Scheduler und Inventar-Import
 
 ## Projektstruktur
 

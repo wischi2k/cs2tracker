@@ -76,11 +76,21 @@ class PriceSchedulerService:
         if not self._is_due(now_ts, interval_seconds):
             return
 
+        rate_limit_remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts)
+        if rate_limit_remaining > 0:
+            return
+
         if not self.config_repo.acquire_auto_refresh_lock(now_ts=now_ts, lease_seconds=self.lock_lease_seconds):
+            return
+
+        if not self.config_repo.acquire_steam_request_lock(now_ts=now_ts, lease_seconds=self.lock_lease_seconds):
+            self.config_repo.release_auto_refresh_lock(now_ts=int(time.time()))
             return
 
         try:
             updated_count, _skipped_count = self.item_service.refresh_all_active_prices()
+            if self.item_service.steam.was_rate_limited:
+                self.config_repo.mark_steam_rate_limited(now_ts=int(time.time()))
             self.item_service.check_and_fire_alerts()
             self.summary_service.record_portfolio_snapshot()
             finished_ts = int(time.time())
@@ -94,6 +104,7 @@ class PriceSchedulerService:
             self.config_repo.set_value("auto_refresh_last_status", "error")
             self.config_repo.set_value("auto_refresh_last_error", str(exc)[:300])
         finally:
+            self.config_repo.release_steam_request_lock(now_ts=int(time.time()))
             self.config_repo.release_auto_refresh_lock(now_ts=int(time.time()))
 
     @staticmethod

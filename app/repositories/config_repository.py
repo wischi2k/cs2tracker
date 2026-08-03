@@ -138,6 +138,44 @@ class ConfigRepository:
         self.set_value("auto_refresh_lock_until_ts", "0")
         self.set_value("auto_refresh_lock_released_ts", str(int(now_ts)))
 
+    def acquire_steam_request_lock(self, now_ts: int, lease_seconds: int = 300) -> bool:
+        con = get_connection()
+        try:
+            con.execute("BEGIN IMMEDIATE")
+            row = con.execute(
+                "SELECT value FROM app_config WHERE key='steam_request_lock_until_ts'"
+            ).fetchone()
+            lock_until = self._to_int(str(row[0]) if row else None, default=0)
+            if lock_until > int(now_ts):
+                con.rollback()
+                return False
+
+            new_lock_until = int(now_ts) + int(lease_seconds)
+            con.execute(
+                """
+                INSERT INTO app_config(key, value, updated_at) VALUES('steam_request_lock_until_ts', ?, ?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+                """,
+                (str(new_lock_until), int(now_ts)),
+            )
+            con.commit()
+            return True
+        finally:
+            con.close()
+
+    def release_steam_request_lock(self, now_ts: int) -> None:
+        self.set_value("steam_request_lock_until_ts", "0")
+        self.set_value("steam_request_lock_released_ts", str(int(now_ts)))
+
+    def get_steam_rate_limit_remaining_seconds(self, now_ts: int) -> int:
+        raw = self.get_value("steam_rate_limit_until_ts", "0")
+        until_ts = self._to_int(raw, default=0)
+        return max(0, until_ts - int(now_ts))
+
+    def mark_steam_rate_limited(self, now_ts: int, cooldown_seconds: int = 900) -> None:
+        until_ts = int(now_ts) + max(60, int(cooldown_seconds))
+        self.set_value("steam_rate_limit_until_ts", str(until_ts))
+
     def get_auto_refresh_status(self) -> dict[str, int | str | None]:
         return {
             "last_run_ts": self._to_int(self.get_value("auto_refresh_last_run_ts"), default=0),
@@ -145,6 +183,8 @@ class ConfigRepository:
             "last_error": self.get_value("auto_refresh_last_error"),
             "last_updated_items": self._to_int(self.get_value("auto_refresh_last_updated_items"), default=0),
             "lock_until_ts": self._to_int(self.get_value("auto_refresh_lock_until_ts"), default=0),
+            "steam_lock_until_ts": self._to_int(self.get_value("steam_request_lock_until_ts"), default=0),
+            "steam_rate_limit_until_ts": self._to_int(self.get_value("steam_rate_limit_until_ts"), default=0),
         }
 
     def acquire_summary_lock(self, now_ts: int, lease_seconds: int = 600) -> bool:
