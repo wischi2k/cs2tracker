@@ -190,6 +190,7 @@ class SteamClient:
 
     def resolve_steam_id(self, raw_input: str) -> str | None:
         """Akzeptiert SteamID64, Profil-URL (/profiles/... oder /id/...) oder Vanity-Namen."""
+        self.was_rate_limited = False
         raw = (raw_input or "").strip()
         if not raw:
             return None
@@ -203,10 +204,23 @@ class SteamClient:
         if not re.fullmatch(r"[A-Za-z0-9_-]{2,64}", vanity):
             return None
         try:
-            page = self._session.get(
+            xml_resp = self._session.get(
+                f"https://steamcommunity.com/id/{quote(vanity)}?xml=1", timeout=10
+            )
+            if xml_resp.status_code == 429:
+                self.was_rate_limited = True
+                return None
+            m = re.search(r"<steamID64>\s*(7656119\d{10})\s*</steamID64>", xml_resp.text)
+            if m:
+                return m.group(1)
+
+            page_resp = self._session.get(
                 f"https://steamcommunity.com/id/{quote(vanity)}", timeout=10
-            ).text
-            m = re.search(r'"steamid"\s*:\s*"(7656119\d{10})"', page)
+            )
+            if page_resp.status_code == 429:
+                self.was_rate_limited = True
+                return None
+            m = re.search(r'"steamid"\s*:\s*"(7656119\d{10})"', page_resp.text)
             return m.group(1) if m else None
         except Exception:
             return None

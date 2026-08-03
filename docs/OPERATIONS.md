@@ -41,6 +41,7 @@ Steam-Rate-Limit-Verhalten:
 - Wenn Steam HTTP 429 liefert, setzt die App einen 15-Minuten-Cooldown.
 - Ein laufender Preisrefresh bricht beim ersten 429 ab, statt weitere Items abzufragen.
 - Der Inventar-Import nutzt erfolgreiche Preview-Daten 15 Minuten aus dem lokalen Cache.
+- SteamID64 oder `/profiles/<steamID64>` sind beim Import robuster als Vanity-URLs (`/id/name`), weil Vanity-Namen erst ueber Steam aufgeloest werden muessen.
 
 Manuell (Debug/Adhoc):
 

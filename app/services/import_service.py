@@ -104,6 +104,9 @@ class ImportService:
         try:
             steam_id = self.steam.resolve_steam_id(steam_input)
             if not steam_id:
+                if self.steam.was_rate_limited:
+                    self.config_repo.mark_steam_rate_limited(now_ts, STEAM_RATE_LIMIT_COOLDOWN_SECONDS)
+                    return None, self._format_wait_message(STEAM_RATE_LIMIT_COOLDOWN_SECONDS)
                 return None, "SteamID nicht erkannt. Bitte SteamID64, Profil-URL oder Vanity-Namen angeben."
 
             inv_items, err = self.steam.fetch_inventory(steam_id)
