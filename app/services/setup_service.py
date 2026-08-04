@@ -28,6 +28,8 @@ class SetupService:
         self.config_repo.set_default_value("auto_refresh_lock_until_ts", "0")
         self.config_repo.set_default_value("steam_request_lock_until_ts", "0")
         self.config_repo.set_default_value("steam_rate_limit_until_ts", "0")
+        self.config_repo.set_default_value("steam_inventory_rate_limit_until_ts", "0")
+        self.config_repo.set_default_value("steam_price_rate_limit_until_ts", "0")
         self.config_repo.set_default_value("summary_enabled", "false")
         self.config_repo.set_default_value("summary_interval_days", "7")
         self.config_repo.set_default_value("summary_send_time", "09:00")

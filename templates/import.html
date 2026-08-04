@@ -28,20 +28,21 @@
 
     {% if import_status and import_status.waiting %}
       <div class="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-        Steam braucht gerade eine kurze Pause. Versuch den Import ab
-        <b>{{ import_status.retry_time }} Uhr</b> nochmal.
+        Dein Import ist vorgemerkt. Steam blockiert Inventar-Anfragen von diesem Server gerade voruebergehend.
         <div class="mt-1 text-xs text-amber-100/75">
-          Der Tracker wartet automatisch, damit Steam nicht weiter blockiert.
+          Lass diese Seite offen. Der Tracker versucht es ab <b>{{ import_status.retry_time }} Uhr</b> automatisch erneut.
         </div>
       </div>
     {% endif %}
 
-    <form method="post" action="{{ url_for('import_preview') }}" class="flex items-center gap-2">
+    <form id="import-preview-form" method="post" action="{{ url_for('import_preview') }}" class="flex items-center gap-2">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input name="steam_input" value="{{ steam_input or '' }}"
              placeholder="z. B. 76561198… oder https://steamcommunity.com/id/name"
              class="input flex-1 text-sm" />
-      <button class="btn btn-amber">Inventar laden</button>
+      <button class="btn btn-amber" {% if import_status and import_status.waiting %}disabled{% endif %}>
+        {% if import_status and import_status.waiting %}Import vorgemerkt{% else %}Import starten{% endif %}
+      </button>
     </form>
 
     {% if error %}
@@ -115,6 +116,17 @@
     function setAll(state) {
       document.querySelectorAll('.import-check').forEach(function (el) { el.checked = state; });
     }
+  </script>
+  {% endif %}
+
+  {% if import_status and import_status.waiting and steam_input %}
+  <script>
+    (function () {
+      var seconds = Number("{{ import_status.retry_seconds }}");
+      var form = document.getElementById("import-preview-form");
+      if (!form || !Number.isFinite(seconds) || seconds <= 0) return;
+      window.setTimeout(function () { form.submit(); }, (seconds + 2) * 1000);
+    })();
   </script>
   {% endif %}
 </div>

@@ -76,7 +76,7 @@ class PriceSchedulerService:
         if not self._is_due(now_ts, interval_seconds):
             return
 
-        rate_limit_remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts)
+        rate_limit_remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts, source="price")
         if rate_limit_remaining > 0:
             return
 
@@ -90,7 +90,7 @@ class PriceSchedulerService:
         try:
             updated_count, _skipped_count = self.item_service.refresh_all_active_prices()
             if self.item_service.steam.was_rate_limited:
-                self.config_repo.mark_steam_rate_limited(now_ts=int(time.time()))
+                self.config_repo.mark_steam_rate_limited(now_ts=int(time.time()), source="price")
             self.item_service.check_and_fire_alerts()
             self.summary_service.record_portfolio_snapshot()
             finished_ts = int(time.time())

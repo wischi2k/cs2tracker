@@ -167,14 +167,22 @@ class ConfigRepository:
         self.set_value("steam_request_lock_until_ts", "0")
         self.set_value("steam_request_lock_released_ts", str(int(now_ts)))
 
-    def get_steam_rate_limit_remaining_seconds(self, now_ts: int) -> int:
-        raw = self.get_value("steam_rate_limit_until_ts", "0")
+    @staticmethod
+    def _steam_rate_limit_key(source: str) -> str:
+        if source == "inventory":
+            return "steam_inventory_rate_limit_until_ts"
+        if source == "price":
+            return "steam_price_rate_limit_until_ts"
+        return "steam_rate_limit_until_ts"
+
+    def get_steam_rate_limit_remaining_seconds(self, now_ts: int, source: str = "global") -> int:
+        raw = self.get_value(self._steam_rate_limit_key(source), "0")
         until_ts = self._to_int(raw, default=0)
         return max(0, until_ts - int(now_ts))
 
-    def mark_steam_rate_limited(self, now_ts: int, cooldown_seconds: int = 900) -> None:
+    def mark_steam_rate_limited(self, now_ts: int, cooldown_seconds: int = 900, source: str = "global") -> None:
         until_ts = int(now_ts) + max(60, int(cooldown_seconds))
-        self.set_value("steam_rate_limit_until_ts", str(until_ts))
+        self.set_value(self._steam_rate_limit_key(source), str(until_ts))
 
     def get_auto_refresh_status(self) -> dict[str, int | str | None]:
         return {
@@ -185,6 +193,12 @@ class ConfigRepository:
             "lock_until_ts": self._to_int(self.get_value("auto_refresh_lock_until_ts"), default=0),
             "steam_lock_until_ts": self._to_int(self.get_value("steam_request_lock_until_ts"), default=0),
             "steam_rate_limit_until_ts": self._to_int(self.get_value("steam_rate_limit_until_ts"), default=0),
+            "steam_inventory_rate_limit_until_ts": self._to_int(
+                self.get_value("steam_inventory_rate_limit_until_ts"), default=0
+            ),
+            "steam_price_rate_limit_until_ts": self._to_int(
+                self.get_value("steam_price_rate_limit_until_ts"), default=0
+            ),
         }
 
     def acquire_summary_lock(self, now_ts: int, lease_seconds: int = 600) -> bool:

@@ -27,15 +27,19 @@ class ImportService:
         self.config_repo = config_repo
 
     def get_saved_steam_input(self) -> str:
-        return self.config_repo.get_value("steam_inventory_input", "") or ""
+        pending = self.config_repo.get_value("steam_inventory_pending_input", "") or ""
+        return pending or self.config_repo.get_value("steam_inventory_input", "") or ""
 
     def get_import_status(self) -> dict:
         now_ts = int(time.time())
-        remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts)
+        remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts, source="inventory")
+        pending = self.config_repo.get_value("steam_inventory_pending_input", "") or ""
         return {
             "waiting": remaining > 0,
             "wait_minutes": max(1, int((remaining + 59) / 60)) if remaining > 0 else 0,
+            "retry_seconds": remaining,
             "retry_time": time.strftime("%H:%M", time.localtime(now_ts + remaining)) if remaining > 0 else "",
+            "pending": bool(pending),
         }
 
     @staticmethod
@@ -95,16 +99,23 @@ class ImportService:
     def _format_wait_message(remaining_seconds: int) -> str:
         minutes = max(1, int((remaining_seconds + 59) / 60))
         retry_time = time.strftime("%H:%M", time.localtime(int(time.time()) + remaining_seconds))
-        return f"Steam macht gerade eine Pause. Versuch es ab {retry_time} Uhr nochmal (ca. {minutes} Min.)."
+        return (
+            "Steam blockiert Inventar-Anfragen von diesem Server gerade voruebergehend. "
+            f"Der naechste automatische Versuch ist ab {retry_time} Uhr moeglich (ca. {minutes} Min.)."
+        )
 
     def build_preview(self, steam_input: str) -> tuple[dict | None, str | None]:
         now_ts = int(time.time())
+        if steam_input.strip():
+            self.config_repo.set_value("steam_inventory_pending_input", steam_input.strip())
+
         cached = self._load_cached_inventory(steam_input, now_ts)
         if cached is not None:
             steam_id, inv_items = cached
+            self.config_repo.set_value("steam_inventory_pending_input", "")
             return self._build_preview_from_items(steam_id, inv_items)
 
-        remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts)
+        remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts, source="inventory")
         if remaining > 0:
             return None, self._format_wait_message(remaining)
 
@@ -115,17 +126,22 @@ class ImportService:
             steam_id = self.steam.resolve_steam_id(steam_input)
             if not steam_id:
                 if self.steam.was_rate_limited:
-                    self.config_repo.mark_steam_rate_limited(now_ts, STEAM_RATE_LIMIT_COOLDOWN_SECONDS)
+                    self.config_repo.mark_steam_rate_limited(
+                        now_ts, STEAM_RATE_LIMIT_COOLDOWN_SECONDS, source="inventory"
+                    )
                     return None, self._format_wait_message(STEAM_RATE_LIMIT_COOLDOWN_SECONDS)
                 return None, "SteamID nicht erkannt. Bitte SteamID64, Profil-URL oder Vanity-Namen angeben."
 
             inv_items, err = self.steam.fetch_inventory(steam_id)
             if err:
                 if self.steam.was_rate_limited:
-                    self.config_repo.mark_steam_rate_limited(now_ts, STEAM_RATE_LIMIT_COOLDOWN_SECONDS)
+                    self.config_repo.mark_steam_rate_limited(
+                        now_ts, STEAM_RATE_LIMIT_COOLDOWN_SECONDS, source="inventory"
+                    )
                 return None, err
 
             self.config_repo.set_value("steam_inventory_input", steam_input.strip())
+            self.config_repo.set_value("steam_inventory_pending_input", "")
             self._save_inventory_cache(steam_input, steam_id, inv_items, now_ts)
             return self._build_preview_from_items(steam_id, inv_items)
         finally:

@@ -33,12 +33,13 @@ Standard:
 - Die App fuehrt Auto-Refresh intern aus (Intervall aus Setup/Settings).
 - Status ist ueber `/health` unter `auto_refresh` sichtbar.
 - `auto_refresh.steam_lock_until_ts` zeigt, ob gerade ein Steam-Zugriff laeuft.
-- `auto_refresh.steam_rate_limit_until_ts` zeigt, bis wann die App nach HTTP 429 keine neuen Steam-Requests startet.
+- `auto_refresh.steam_inventory_rate_limit_until_ts` zeigt, bis wann der Inventar-Import nach HTTP 429 wartet.
+- `auto_refresh.steam_price_rate_limit_until_ts` zeigt, bis wann der Preisrefresh nach HTTP 429 wartet.
 
 Steam-Rate-Limit-Verhalten:
 
-- Preisrefresh und Inventar-Import teilen sich denselben Steam-Lock.
-- Wenn Steam HTTP 429 liefert, setzt die App einen 15-Minuten-Cooldown.
+- Preisrefresh und Inventar-Import teilen sich denselben Steam-Lock, haben aber getrennte Cooldowns.
+- Wenn Steam HTTP 429 liefert, setzt die App fuer den betroffenen Bereich einen 15-Minuten-Cooldown.
 - Ein laufender Preisrefresh bricht beim ersten 429 ab, statt weitere Items abzufragen.
 - Der Inventar-Import nutzt erfolgreiche Preview-Daten 15 Minuten aus dem lokalen Cache.
 - SteamID64 oder `/profiles/<steamID64>` sind beim Import robuster als Vanity-URLs (`/id/name`), weil Vanity-Namen erst ueber Steam aufgeloest werden muessen.
