@@ -11,6 +11,31 @@
       Haken weg = Item wird deaktiviert (Historie bleibt erhalten).
     </p>
 
+    <div class="mb-4 grid gap-2 text-sm text-slate-300 sm:grid-cols-3">
+      <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+        <div class="text-xs font-semibold uppercase text-slate-500">1</div>
+        Inventar oeffentlich stellen
+      </div>
+      <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+        <div class="text-xs font-semibold uppercase text-slate-500">2</div>
+        SteamID64 oder Profil-URL einfuegen
+      </div>
+      <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+        <div class="text-xs font-semibold uppercase text-slate-500">3</div>
+        Items auswaehlen und uebernehmen
+      </div>
+    </div>
+
+    {% if import_status and import_status.waiting %}
+      <div class="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        Steam braucht gerade eine kurze Pause. Versuch den Import ab
+        <b>{{ import_status.retry_time }} Uhr</b> nochmal.
+        <div class="mt-1 text-xs text-amber-100/75">
+          Der Tracker wartet automatisch, damit Steam nicht weiter blockiert.
+        </div>
+      </div>
+    {% endif %}
+
     <form method="post" action="{{ url_for('import_preview') }}" class="flex items-center gap-2">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input name="steam_input" value="{{ steam_input or '' }}"

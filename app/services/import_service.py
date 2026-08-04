@@ -29,6 +29,15 @@ class ImportService:
     def get_saved_steam_input(self) -> str:
         return self.config_repo.get_value("steam_inventory_input", "") or ""
 
+    def get_import_status(self) -> dict:
+        now_ts = int(time.time())
+        remaining = self.config_repo.get_steam_rate_limit_remaining_seconds(now_ts)
+        return {
+            "waiting": remaining > 0,
+            "wait_minutes": max(1, int((remaining + 59) / 60)) if remaining > 0 else 0,
+            "retry_time": time.strftime("%H:%M", time.localtime(now_ts + remaining)) if remaining > 0 else "",
+        }
+
     @staticmethod
     def _cache_key(steam_input: str) -> str:
         return (steam_input or "").strip().casefold()
@@ -85,7 +94,8 @@ class ImportService:
     @staticmethod
     def _format_wait_message(remaining_seconds: int) -> str:
         minutes = max(1, int((remaining_seconds + 59) / 60))
-        return f"Steam-Rate-Limit aktiv. Bitte in ca. {minutes} Minuten erneut versuchen."
+        retry_time = time.strftime("%H:%M", time.localtime(int(time.time()) + remaining_seconds))
+        return f"Steam macht gerade eine Pause. Versuch es ab {retry_time} Uhr nochmal (ca. {minutes} Min.)."
 
     def build_preview(self, steam_input: str) -> tuple[dict | None, str | None]:
         now_ts = int(time.time())

@@ -13,6 +13,7 @@ def register_import_routes(app, import_service: ImportService) -> None:
             steam_input=import_service.get_saved_steam_input(),
             preview=None,
             error=None,
+            import_status=import_service.get_import_status(),
         )
 
     @app.post("/import/preview")
@@ -24,6 +25,7 @@ def register_import_routes(app, import_service: ImportService) -> None:
             steam_input=steam_input,
             preview=preview,
             error=error,
+            import_status=import_service.get_import_status(),
         )
 
     @app.post("/import/apply")
