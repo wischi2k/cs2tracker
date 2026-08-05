@@ -106,6 +106,29 @@ class SteamClient:
         return data if isinstance(data, dict) else None
 
     @staticmethod
+    def _fetch_text_with_curl(url: str, follow_redirects: bool = False) -> str | None:
+        curl_bin = shutil.which("curl")
+        if not curl_bin:
+            return None
+        args = [curl_bin, "-fsS", "--compressed", "--max-time", "25"]
+        if follow_redirects:
+            args.append("-L")
+        args.append(url)
+        try:
+            proc = subprocess.run(
+                args,
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=30,
+            )
+        except Exception:
+            return None
+        if proc.returncode != 0 or not proc.stdout:
+            return None
+        return proc.stdout.lstrip("\ufeff")
+
+    @staticmethod
     def parse_eur_to_cents(price_str: str) -> int | None:
         if not price_str:
             return None
@@ -127,6 +150,25 @@ class SteamClient:
         except ValueError:
             return None
 
+    def _fetch_listing_lowest_price_cents(self, market_hash: str) -> int | None:
+        """Fallback: parse the lowest EUR gross listing price from Steam's listing page.
+
+        `priceoverview` is the small endpoint, but Steam sometimes rate-limits it while
+        the listing page still renders. The new market page embeds listing data as an
+        escaped JSON payload with `strSubtotal` values such as `€125.51`.
+        """
+        url = f"https://steamcommunity.com/market/listings/730/{quote(market_hash)}"
+        html_text = self._fetch_text_with_curl(url, follow_redirects=True)
+        if not html_text:
+            return None
+
+        prices: list[int] = []
+        for match in re.finditer(r'strSubtotal\\+":\\+"([^\\]+)', html_text):
+            cents = self.parse_eur_to_cents(match.group(1))
+            if cents is not None and cents > 0:
+                prices.append(cents)
+        return min(prices) if prices else None
+
     def fetch_price_cents(self, market_hash: str) -> int | None:
         self.was_rate_limited = False
         url = (
@@ -136,16 +178,20 @@ class SteamClient:
         try:
             resp = self._session.get(url, timeout=15)
             if resp.status_code == 429:
+                fallback_cents = self._fetch_listing_lowest_price_cents(market_hash)
+                if fallback_cents is not None:
+                    return fallback_cents
                 self.was_rate_limited = True
                 return None
             txt = resp.text.lstrip("\ufeff")
             data = json.loads(txt)
             if not isinstance(data, dict) or not data.get("success"):
-                return None
+                return self._fetch_listing_lowest_price_cents(market_hash)
             price_str = data.get("lowest_price") or data.get("median_price") or ""
-            return self.parse_eur_to_cents(price_str)
+            cents = self.parse_eur_to_cents(price_str)
+            return cents if cents is not None else self._fetch_listing_lowest_price_cents(market_hash)
         except Exception:
-            return None
+            return self._fetch_listing_lowest_price_cents(market_hash)
 
     def fetch_meta_for_hash(self, market_hash: str) -> tuple[str, str | None, str | None]:
         query = quote(market_hash)

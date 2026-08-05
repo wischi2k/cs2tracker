@@ -88,15 +88,26 @@ class PriceSchedulerService:
             return
 
         try:
-            updated_count, _skipped_count = self.item_service.refresh_all_active_prices()
+            updated_count, skipped_count = self.item_service.refresh_all_active_prices()
             if self.item_service.steam.was_rate_limited:
                 self.config_repo.mark_steam_rate_limited(now_ts=int(time.time()), source="price")
             self.item_service.check_and_fire_alerts()
-            self.summary_service.record_portfolio_snapshot()
+            if updated_count > 0:
+                self.summary_service.record_portfolio_snapshot()
             finished_ts = int(time.time())
             self.config_repo.set_value("auto_refresh_last_run_ts", str(finished_ts))
-            self.config_repo.set_value("auto_refresh_last_status", "ok")
-            self.config_repo.set_value("auto_refresh_last_error", "")
+            if self.item_service.steam.was_rate_limited:
+                self.config_repo.set_value("auto_refresh_last_status", "rate_limited")
+                self.config_repo.set_value("auto_refresh_last_error", "Steam price endpoint returned HTTP 429.")
+            elif updated_count == 0 and skipped_count > 0:
+                self.config_repo.set_value("auto_refresh_last_status", "no_price_updates")
+                self.config_repo.set_value(
+                    "auto_refresh_last_error",
+                    f"No prices updated; {skipped_count} active items were skipped.",
+                )
+            else:
+                self.config_repo.set_value("auto_refresh_last_status", "ok")
+                self.config_repo.set_value("auto_refresh_last_error", "")
             self.config_repo.set_value("auto_refresh_last_updated_items", str(updated_count))
         except Exception as exc:
             finished_ts = int(time.time())
