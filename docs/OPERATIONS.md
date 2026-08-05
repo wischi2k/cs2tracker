@@ -14,6 +14,11 @@ Umgebungsvariablen:
 
 Hinweis: Bei aktivem Setup werden Telegram-Werte verschluesselt in SQLite gespeichert.
 
+Runtime-Abhaengigkeiten:
+
+- Python-Abhaengigkeiten aus `requirements.txt`
+- `curl` auf dem Server fuer den robusten Steam-Inventar-Import-Fallback
+
 ## Start
 
 ```bash
@@ -42,7 +47,15 @@ Steam-Rate-Limit-Verhalten:
 - Wenn Steam HTTP 429 liefert, setzt die App fuer den betroffenen Bereich einen 15-Minuten-Cooldown.
 - Ein laufender Preisrefresh bricht beim ersten 429 ab, statt weitere Items abzufragen.
 - Der Inventar-Import nutzt erfolgreiche Preview-Daten 15 Minuten aus dem lokalen Cache.
+- Wenn Python beim Inventar-Import HTTP 429 oder unbrauchbares JSON bekommt, versucht die App dieselbe URL einmal per lokalem `curl`.
 - SteamID64 oder `/profiles/<steamID64>` sind beim Import robuster als Vanity-URLs (`/id/name`), weil Vanity-Namen erst ueber Steam aufgeloest werden muessen.
+
+Diagnose fuer Inventar-Import:
+
+```bash
+curl -s -o /tmp/inv.json -w '%{http_code} size=%{size_download}\n' \
+  'https://steamcommunity.com/inventory/<STEAMID64>/730/2?l=german&count=2000'
+```
 
 Manuell (Debug/Adhoc):
 

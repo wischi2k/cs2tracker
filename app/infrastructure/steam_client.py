@@ -3,6 +3,8 @@
 import html
 import json
 import re
+import shutil
+import subprocess
 from urllib.parse import quote, unquote
 
 import time as _time
@@ -77,6 +79,29 @@ class SteamClient:
         if icon_path.startswith("http://") or icon_path.startswith("https://"):
             return icon_path
         return f"https://steamcommunity-a.akamaihd.net/economy/image/{icon_path}"
+
+    @staticmethod
+    def _fetch_json_with_curl(url: str) -> dict | None:
+        curl_bin = shutil.which("curl")
+        if not curl_bin:
+            return None
+        try:
+            proc = subprocess.run(
+                [curl_bin, "-fsS", "--compressed", "--max-time", "25", url],
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=30,
+            )
+        except Exception:
+            return None
+        if proc.returncode != 0 or not proc.stdout:
+            return None
+        try:
+            data = json.loads(proc.stdout.lstrip("\ufeff"))
+        except Exception:
+            return None
+        return data if isinstance(data, dict) else None
 
     @staticmethod
     def parse_eur_to_cents(price_str: str) -> int | None:
@@ -246,12 +271,17 @@ class SteamClient:
             if resp.status_code == 403:
                 return None, "Das Inventar ist privat. Bitte in den Steam-Privatsphaere-Einstellungen auf 'Oeffentlich' stellen."
             if resp.status_code == 429:
-                self.was_rate_limited = True
-                return None, "Steam-Rate-Limit erreicht (429). Bitte ein paar Minuten warten."
-            try:
-                data = resp.json()
-            except Exception:
-                data = None
+                data = self._fetch_json_with_curl(url)
+                if data is None:
+                    self.was_rate_limited = True
+                    return None, "Steam-Rate-Limit erreicht (429). Bitte ein paar Minuten warten."
+            else:
+                try:
+                    data = resp.json()
+                except Exception:
+                    data = None
+                if not isinstance(data, dict):
+                    data = self._fetch_json_with_curl(url)
             if not isinstance(data, dict) or not data.get("success"):
                 return None, "Inventar konnte nicht geladen werden (unerwartete Steam-Antwort)."
 

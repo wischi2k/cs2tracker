@@ -118,3 +118,10 @@
 - Kontext: Der Inventory-Endpoint und die Market-Preis-API werden von Steam aggressiv limitiert. Der Import selbst laedt zwar seriell, konnte aber parallel zu einem Scheduler-Preisrefresh laufen. Wiederholte Klicks auf "Inventar laden" haben nach einem 429 sofort weitere Steam-Requests ausgeloest.
 - Entscheidung: Alle groesseren Steam-Zugriffe teilen sich `steam_request_lock_until_ts` in `app_config`. Bei HTTP 429 wird `steam_rate_limit_until_ts` fuer 15 Minuten gesetzt. Der Scheduler startet waehrend des Cooldowns keinen Preisrefresh und bricht einen laufenden Refresh beim ersten 429 ab. Erfolgreiche Inventory-Previews werden 15 Minuten in `steam_inventory_preview_cache_json` gespeichert.
 - Konsequenz: Weniger konkurrierende Steam-Requests und kein lokales Nachfeuern waehrend eines Rate-Limits. Der Import kann direkt erneut angezeigt werden, solange der lokale Preview-Cache gueltig ist. Nach einem echten 429 muss der Nutzer warten, bekommt aber eine klare Restzeit statt einer generischen Fehlermeldung.
+
+## 018 - Curl-Fallback fuer Steam-Inventar-Import
+
+- Status: umgesetzt
+- Kontext: Auf dem CS2-Tracker-Server lieferte der direkte Inventory-Endpunkt per `curl` HTTP 200 mit Inventar-JSON, waehrend Python `requests` und `urllib` fuer dieselbe URL HTTP 429 mit Body `null` bekamen. Das Inventar war oeffentlich sichtbar; das Problem lag am Python-HTTP-Abruf/Fingerprint, nicht am Profil-Link.
+- Entscheidung: `SteamClient.fetch_inventory()` versucht den normalen Python-Request weiterhin zuerst. Wenn Steam darauf HTTP 429 liefert oder die Antwort kein JSON-Dict ist, ruft der Client dieselbe URL per lokalem `curl -fsS --compressed --max-time 25` ab und parsed das JSON danach mit derselben Aggregationslogik.
+- Konsequenz: Der Import bleibt fuer Nutzer automatisch und nutzt den auf dem Server nachweislich funktionierenden HTTP-Client. `curl` wird damit zur Runtime-Voraussetzung fuer den robusten Inventar-Import. Preisabrufe bleiben unveraendert bei Python `requests`, damit nicht jeder Scheduler-Lauf Shell-Prozesse startet.

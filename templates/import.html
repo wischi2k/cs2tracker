@@ -5,30 +5,29 @@
   <div class="card p-5">
     <h2 class="text-lg font-semibold mb-1">Steam-Inventar importieren</h2>
     <p class="text-sm text-slate-400 mb-4">
-      SteamID64, Profil-URL oder Vanity-Namen eingeben. Das Inventar muss in den
+      Gib deine SteamID64 oder deine Profil-URL ein. Dein Inventar muss in den
       Steam-Privatsphäre-Einstellungen auf <b>Öffentlich</b> stehen.
-      Diese Seite ist gleichzeitig der Abgleich: Haken an = Item wird getrackt,
-      Haken weg = Item wird deaktiviert (Historie bleibt erhalten).
+      Nach dem Laden wählst du aus, welche Items im Tracker aktiv bleiben.
     </p>
 
     <div class="mb-4 grid gap-2 text-sm text-slate-300 sm:grid-cols-3">
       <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
         <div class="text-xs font-semibold uppercase text-slate-500">1</div>
-        Inventar oeffentlich stellen
+        Inventar öffentlich stellen
       </div>
       <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
         <div class="text-xs font-semibold uppercase text-slate-500">2</div>
-        SteamID64 oder Profil-URL einfuegen
+        SteamID64 oder Profil-URL einfügen
       </div>
       <div class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
         <div class="text-xs font-semibold uppercase text-slate-500">3</div>
-        Items auswaehlen und uebernehmen
+        Items auswählen und übernehmen
       </div>
     </div>
 
     {% if import_status and import_status.waiting %}
       <div class="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-        Dein Import ist vorgemerkt. Steam blockiert Inventar-Anfragen von diesem Server gerade voruebergehend.
+        Dein Import ist vorgemerkt. Steam blockiert Inventar-Anfragen von diesem Server gerade vorübergehend.
         <div class="mt-1 text-xs text-amber-100/75">
           Lass diese Seite offen. Der Tracker versucht es ab <b>{{ import_status.retry_time }} Uhr</b> automatisch erneut.
         </div>
@@ -38,7 +37,7 @@
     <form id="import-preview-form" method="post" action="{{ url_for('import_preview') }}" class="flex items-center gap-2">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input name="steam_input" value="{{ steam_input or '' }}"
-             placeholder="z. B. 76561198… oder https://steamcommunity.com/id/name"
+             placeholder="z. B. 7656119... oder https://steamcommunity.com/profiles/7656119..."
              class="input flex-1 text-sm" />
       <button class="btn btn-amber" {% if import_status and import_status.waiting %}disabled{% endif %}>
         {% if import_status and import_status.waiting %}Import vorgemerkt{% else %}Import starten{% endif %}
@@ -105,7 +104,7 @@
 
     <div class="flex items-center justify-between">
       <div class="text-xs text-slate-400">
-        Neue Items starten ohne Kaufpreis — den trägst du später per „Bearbeiten" nach.
+        Neue Items starten ohne Kaufpreis. Den trägst du später per „Bearbeiten“ nach.
         Preise werden nach dem Übernehmen im Hintergrund geladen.
       </div>
       <button class="btn btn-amber">Auswahl übernehmen</button>
