@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 
+from app.domain.wear import append_wear_condition, extract_wear_condition
 from app.infrastructure.steam_client import SteamClient
 from app.repositories.config_repository import ConfigRepository
 from app.repositories.item_repository import ItemRepository
@@ -51,9 +52,14 @@ class ImportService:
         preview = []
         for item in inv_items:
             db_item = existing.get(item["market_hash"])
+            normalized_item = {
+                **item,
+                "name": append_wear_condition(item.get("name"), item.get("market_hash")),
+                "wear": item.get("wear") or extract_wear_condition(item.get("market_hash")),
+            }
             preview.append(
                 {
-                    **item,
+                    **normalized_item,
                     "tracked": db_item is not None,
                     "active": bool(int(db_item["is_active"])) if db_item else False,
                     "db_qty": int(db_item["quantity"]) if db_item else None,

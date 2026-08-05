@@ -5,6 +5,7 @@ import time
 from dataclasses import asdict
 
 from app.domain.models import ItemView
+from app.domain.wear import append_wear_condition
 from app.infrastructure.steam_client import SteamClient
 from app.infrastructure.telegram_client import TelegramClient
 from app.repositories.item_repository import ItemRepository
@@ -63,9 +64,10 @@ class ItemService:
         if not category:
             category = self._infer_category((row.get("market_hash") or row.get("display_name") or ""))
         item_type = row.get("item_type") or "inventory"
+        display_name = append_wear_condition(row.get("display_name"), row.get("market_hash"))
         return ItemView(
             id=int(row["id"]),
-            name=row.get("display_name") or "",
+            name=display_name,
             icon=row.get("icon_url"),
             icon_updated_at=int(row.get("icon_updated_at") or 0),
             cat=category,
@@ -219,7 +221,7 @@ class ItemService:
                 triggered = gross_price <= threshold if not above else gross_price >= threshold
 
             if triggered:
-                item_name = row.get("display_name") or f"Item #{row['id']}"
+                item_name = append_wear_condition(row.get("display_name"), row.get("market_hash")) or f"Item #{row['id']}"
                 if self.telegram:
                     if item_type == "inventory":
                         net_eur = cur_c * (1 - FEE_RATE) / 100.0

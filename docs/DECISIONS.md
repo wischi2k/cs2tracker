@@ -125,3 +125,10 @@
 - Kontext: Auf dem CS2-Tracker-Server lieferte der direkte Inventory-Endpunkt per `curl` HTTP 200 mit Inventar-JSON, waehrend Python `requests` und `urllib` fuer dieselbe URL HTTP 429 mit Body `null` bekamen. Das Inventar war oeffentlich sichtbar; das Problem lag am Python-HTTP-Abruf/Fingerprint, nicht am Profil-Link.
 - Entscheidung: `SteamClient.fetch_inventory()` versucht den normalen Python-Request weiterhin zuerst. Wenn Steam darauf HTTP 429 liefert oder die Antwort kein JSON-Dict ist, ruft der Client dieselbe URL per lokalem `curl -fsS --compressed --max-time 25` ab und parsed das JSON danach mit derselben Aggregationslogik.
 - Konsequenz: Der Import bleibt fuer Nutzer automatisch und nutzt den auf dem Server nachweislich funktionierenden HTTP-Client. `curl` wird damit zur Runtime-Voraussetzung fuer den robusten Inventar-Import. Preisabrufe bleiben unveraendert bei Python `requests`, damit nicht jeder Scheduler-Lauf Shell-Prozesse startet.
+
+## 019 - Wear-Zustand aus Steam-Market-Hash anzeigen
+
+- Status: umgesetzt
+- Kontext: Der Steam-Inventar-Endpunkt liefert fuer lokalisierte Item-Namen nicht immer den Wear-Zustand im Feld `name`; im `market_hash_name` ist er fuer Skins aber eindeutig enthalten, z. B. `(Factory New)` oder `(Battle-Scarred)`.
+- Entscheidung: Der Import extrahiert den Wear-Zustand aus `market_hash_name` und haengt ihn an den Anzeigenamen an, falls er dort fehlt. Die normale Item-Ansicht und Telegram-Zusammenfassung wenden dieselbe Regel zur Laufzeit an, damit auch bereits importierte Items ohne Datenbank-Migration korrekt angezeigt werden.
+- Konsequenz: Bestehende Daten bleiben unveraendert, aber die Oberflaeche zeigt den Zustand konsistent an. Manuell gepflegte Namen werden nicht blind ueberschrieben; der Zustand wird nur ergaenzt, wenn er aus dem Market-Hash sicher ableitbar ist.

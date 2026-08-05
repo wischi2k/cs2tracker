@@ -4,6 +4,7 @@ import time
 from dataclasses import dataclass
 
 from app.domain.constants import STEAM_FEE_RATE
+from app.domain.wear import append_wear_condition
 from app.repositories.item_repository import ItemRepository
 
 
@@ -38,7 +39,7 @@ class SummaryService:
         for row in inventory_items:
             item_id = int(row["id"])
             qty = max(1, int(row.get("quantity") or 1))
-            name = str(row.get("display_name") or f"Item #{item_id}")
+            name = append_wear_condition(row.get("display_name"), row.get("market_hash")) or f"Item #{item_id}"
             if qty > 1:
                 name = f"{name} (x{qty})"
 
@@ -122,7 +123,7 @@ class SummaryService:
             lines.append("<b>👁 Beobachtungsliste</b>")
             for row in tracking_items:
                 item_id = int(row["id"])
-                name = str(row.get("display_name") or f"Item #{item_id}")
+                name = append_wear_condition(row.get("display_name"), row.get("market_hash")) or f"Item #{item_id}"
                 latest = self.repo.get_latest_price_cents(item_id)
                 price_str = f"{latest / 100.0:.2f} EUR" if latest is not None else "kein Preis"
                 threshold = row.get("threshold_net_eur")

@@ -84,7 +84,9 @@
 
         <div class="min-w-0 flex-1">
           <div class="truncate text-sm font-medium">{{ item.name }}</div>
-          <div class="text-xs text-slate-400">{{ item.category or 'Unbekannt' }}</div>
+          <div class="text-xs text-slate-400">
+            {{ item.category or 'Unbekannt' }}{% if item.wear %} · {{ item.wear }}{% endif %}
+          </div>
         </div>
 
         {% if item.qty > 1 %}

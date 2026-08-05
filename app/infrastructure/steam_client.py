@@ -12,6 +12,8 @@ import time as _time
 import requests
 from bs4 import BeautifulSoup
 
+from app.domain.wear import append_wear_condition, extract_wear_condition
+
 
 class SteamClient:
     def __init__(self) -> None:
@@ -253,7 +255,7 @@ class SteamClient:
     def fetch_inventory(self, steam_id64: str) -> tuple[list[dict] | None, str | None]:
         """CS2-Inventar (app 730, context 2) laden. Liefert (Items, Fehlertext).
 
-        Items sind pro market_hash aggregiert: {market_hash, name, icon, category, qty}.
+        Items sind pro market_hash aggregiert: {market_hash, name, wear, icon, category, qty}.
         Nur marketable Items (nur die haben einen Steam-Market-Preis).
         """
         self.was_rate_limited = False
@@ -299,9 +301,11 @@ class SteamClient:
                     continue
                 entry = aggregated.get(mh)
                 if entry is None:
+                    display_name = append_wear_condition(desc.get("name"), mh)
                     aggregated[mh] = {
                         "market_hash": mh,
-                        "name": (desc.get("name") or mh).strip(),
+                        "name": display_name,
+                        "wear": extract_wear_condition(mh),
                         "icon": self._resolve_icon_url(desc.get("icon_url") or desc.get("icon_url_large")),
                         "category": self._normalize_category(desc.get("type") or ""),
                         "qty": 1,
