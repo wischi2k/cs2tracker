@@ -137,5 +137,5 @@
 
 - Status: umgesetzt
 - Kontext: Nach dem Inventar-Import koennen deutlich mehr aktive Items vorhanden sein als vorher. Ein vollstaendiger Preisrefresh gegen Steam fuehrt dann auch mit Request-Pausen zu 429-Antworten und leeren Refresh-Laeufen.
-- Entscheidung: Jeder automatische Preisrefresh aktualisiert maximal 25 aktive Items und sortiert vorher nach dem aeltesten vorhandenen Preis-Snapshot. Wenn `priceoverview` blockiert ist, nutzt der Client als Fallback die Steam-Listing-Seite und extrahiert den niedrigsten Euro-Bruttopreis aus den eingebetteten Listings.
+- Entscheidung: Jeder automatische Preisrefresh aktualisiert maximal 25 aktive Items und sortiert vorher nach dem aeltesten vorhandenen Preis-Snapshot. Wenn `priceoverview` blockiert ist, nutzt der Client als Fallback die Steam-Listing-Seite. Bei gruppierten CS2-Listings wird zuerst der exakt passende `bucket_id` gelesen; nur wenn kein Bucket vorhanden ist, wird der niedrigste Euro-Bruttopreis aus den eingebetteten Listings verwendet.
 - Konsequenz: Der Tracker rotiert ueber mehrere Laeufe durch grosse Inventare, schreibt wieder echte Preis-Snapshots und vermeidet, Steam in einem Lauf mit der kompletten Item-Liste zu belasten. Leere oder rate-limitierte Laeufe werden nicht mehr als gesundes `ok` gemeldet.

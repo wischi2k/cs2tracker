@@ -155,12 +155,20 @@ class SteamClient:
 
         `priceoverview` is the small endpoint, but Steam sometimes rate-limits it while
         the listing page still renders. The new market page embeds listing data as an
-        escaped JSON payload with `strSubtotal` values such as `€125.51`.
+        escaped JSON payload. For grouped CS2 items, the page contains multiple wear
+        buckets, so the exact `bucket_id` must win over the global lowest listing.
         """
         url = f"https://steamcommunity.com/market/listings/730/{quote(market_hash)}"
         html_text = self._fetch_text_with_curl(url, follow_redirects=True)
         if not html_text:
             return None
+
+        exact_bucket = re.search(
+            r'bucket_id\\+":\\+"' + re.escape(market_hash) + r'\\+".{0,800}?min_price\\+":\\+"(\d+)\\+"',
+            html_text,
+        )
+        if exact_bucket:
+            return int(exact_bucket.group(1))
 
         prices: list[int] = []
         for match in re.finditer(r'strSubtotal\\+":\\+"([^\\]+)', html_text):
