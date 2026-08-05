@@ -11,6 +11,7 @@ from app.infrastructure.telegram_client import TelegramClient
 from app.repositories.item_repository import ItemRepository
 
 FEE_RATE = 0.15
+MAX_PRICE_REFRESH_ITEMS_PER_RUN = 25
 CATEGORIES = [
     "Waffen-Skin",
     "Sticker",
@@ -255,11 +256,16 @@ class ItemService:
         return False
 
     def refresh_all_active_prices(self) -> tuple[int, int]:
-        rows = self.repo.list_items_with_latest_price()
+        rows = sorted(
+            self.repo.list_items_with_latest_price(),
+            key=lambda row: int(row.get("current_price_ts") or 0),
+        )
         updated = 0
         skipped = 0
         first = True
         for row in rows:
+            if updated >= MAX_PRICE_REFRESH_ITEMS_PER_RUN:
+                break
             if int(row.get("is_active") or 1) != 1:
                 continue
             item_id = int(row["id"])

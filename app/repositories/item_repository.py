@@ -100,7 +100,14 @@ class ItemRepository:
                         WHERE p.item_id = i.id
                         ORDER BY p.ts DESC
                         LIMIT 1
-                    ) AS current_price_cents
+                    ) AS current_price_cents,
+                    (
+                        SELECT p.ts
+                        FROM prices p
+                        WHERE p.item_id = i.id
+                        ORDER BY p.ts DESC
+                        LIMIT 1
+                    ) AS current_price_ts
                 FROM items i
                 ORDER BY i.display_name
                 """
@@ -131,7 +138,14 @@ class ItemRepository:
                         WHERE p.item_id = i.id
                         ORDER BY p.ts DESC
                         LIMIT 1
-                    ) AS current_price_cents
+                    ) AS current_price_cents,
+                    (
+                        SELECT p.ts
+                        FROM prices p
+                        WHERE p.item_id = i.id
+                        ORDER BY p.ts DESC
+                        LIMIT 1
+                    ) AS current_price_ts
                 FROM items i
                 WHERE i.id=?
                 """,

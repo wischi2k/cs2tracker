@@ -132,3 +132,10 @@
 - Kontext: Der Steam-Inventar-Endpunkt liefert fuer lokalisierte Item-Namen nicht immer den Wear-Zustand im Feld `name`; im `market_hash_name` ist er fuer Skins aber eindeutig enthalten, z. B. `(Factory New)` oder `(Battle-Scarred)`.
 - Entscheidung: Der Import extrahiert den Wear-Zustand aus `market_hash_name` und haengt ihn an den Anzeigenamen an, falls er dort fehlt. Die normale Item-Ansicht und Telegram-Zusammenfassung wenden dieselbe Regel zur Laufzeit an, damit auch bereits importierte Items ohne Datenbank-Migration korrekt angezeigt werden.
 - Konsequenz: Bestehende Daten bleiben unveraendert, aber die Oberflaeche zeigt den Zustand konsistent an. Manuell gepflegte Namen werden nicht blind ueberschrieben; der Zustand wird nur ergaenzt, wenn er aus dem Market-Hash sicher ableitbar ist.
+
+## 020 - Preisrefresh in kleinen rotierenden Batches
+
+- Status: umgesetzt
+- Kontext: Nach dem Inventar-Import koennen deutlich mehr aktive Items vorhanden sein als vorher. Ein vollstaendiger Preisrefresh gegen Steam fuehrt dann auch mit Request-Pausen zu 429-Antworten und leeren Refresh-Laeufen.
+- Entscheidung: Jeder automatische Preisrefresh aktualisiert maximal 25 aktive Items und sortiert vorher nach dem aeltesten vorhandenen Preis-Snapshot. Wenn `priceoverview` blockiert ist, nutzt der Client als Fallback die Steam-Listing-Seite und extrahiert den niedrigsten Euro-Bruttopreis aus den eingebetteten Listings.
+- Konsequenz: Der Tracker rotiert ueber mehrere Laeufe durch grosse Inventare, schreibt wieder echte Preis-Snapshots und vermeidet, Steam in einem Lauf mit der kompletten Item-Liste zu belasten. Leere oder rate-limitierte Laeufe werden nicht mehr als gesundes `ok` gemeldet.
